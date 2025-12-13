@@ -867,8 +867,8 @@ export default function PortfolioShrabya() {
         <section id="about" className="py-8">
           <SectionTitle
             eyebrow="About"
-            title="Developer with a gamer’s mindset."
-            desc="I love building systems that feel alive—real-time stats, mission logic, progress tracking, and rewarding UX. I’m comfortable across frontend, backend, and database design, and I enjoy polishing UI details with animation."
+            title="Full-Stack Web Developer focused on modern and scalable design"
+            desc="I build modern, scalable web applications with a focus on performance, clean architecture, and polished user experience. I work across frontend, backend, and databases, and enjoy enhancing interfaces with smooth animations and intuitive design."
           />
 
           <div className="grid gap-4 md:grid-cols-3">
