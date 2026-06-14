@@ -509,7 +509,7 @@ export default function PortfolioShrabya() {
         linkedin: "https://www.linkedin.com/in/shrabya-paudel-703055394/?trk=public-profile-join-page",
         website: "https://",
       },
-      resumeUrl: "https://drive.google.com/drive/u/0/folders/1s_ZOqWpWw7stI71JP_8fgpe5A7dt7X_K", // put a PDF link or route
+      resumeUrl: "https://docs.google.com/document/d/17g1znbg0qaE17DpC2wvXfoAlZoMSvW3d/export?format=pdf", // downloads the resume as PDF
     }),
     []
   );
@@ -552,7 +552,7 @@ export default function PortfolioShrabya() {
       {
         title: "BSc (Hons) Computer Science & Artificial Intelligence",
         org: "University of Wolverhampton (Partner Program)",
-        time: "Ongoing",
+        time: "Awaiting Graduation",
         desc:
           "Focused on software engineering, AI fundamentals, and building real-world applications with modern web stacks.",
         highlights: ["Software Engineering", "AI", "Databases", "Cloud"],
