@@ -1,5 +1,5 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
-import { motion, useAnimation, useInView } from "framer-motion";
+import { motion, useAnimation, useInView, useScroll, useSpring, useTransform } from "framer-motion";
 import {
   ArrowRight,
   Download,
@@ -64,6 +64,204 @@ function scrollToId(id) {
   const el = document.getElementById(id);
   if (!el) return;
   el.scrollIntoView({ behavior: "smooth", block: "start" });
+}
+
+// Top scroll-progress bar
+function ScrollProgress() {
+  const { scrollYProgress } = useScroll();
+  const scaleX = useSpring(scrollYProgress, {
+    stiffness: 120,
+    damping: 30,
+    restDelta: 0.001,
+  });
+  return (
+    <motion.div
+      style={{ scaleX }}
+      className="fixed inset-x-0 top-0 z-[90] h-[3px] origin-left bg-gradient-to-r from-indigo-500 via-fuchsia-500 to-cyan-400"
+    />
+  );
+}
+
+// Scroll-reveal wrapper: fades + slides children in when they enter view
+function Reveal({ children, delay = 0, y = 28, className = "" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={className}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+// Card that lifts + glows on hover and reveals on scroll
+function HoverCard({ children, delay = 0, className = "" }) {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      whileHover={{ y: -6 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 0.55, delay, ease: [0.22, 1, 0.36, 1] }}
+      className={`group/hc rounded-xl transition-shadow duration-300 hover:shadow-[0_30px_80px_-40px_rgba(168,85,247,0.5)] ${className}`}
+    >
+      {children}
+    </motion.div>
+  );
+}
+
+function TechMarquee() {
+  const items = [
+    "React", "Node.js", "MongoDB", "Express", "TypeScript", "Tailwind CSS",
+    "Framer Motion", "REST APIs", "JWT Auth", "Cron Jobs", "Mongoose", "Vite",
+    "eSewa", "Riot API", "Offerwalls",
+  ];
+  const row = [...items, ...items];
+  return (
+    <div className="relative overflow-hidden border-y border-white/10 bg-white/[0.02] py-5">
+      <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-24 bg-gradient-to-r from-black to-transparent" />
+      <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-24 bg-gradient-to-l from-black to-transparent" />
+      <div className="flex w-max animate-marquee items-center gap-10 whitespace-nowrap">
+        {row.map((t, i) => (
+          <span
+            key={i}
+            className="label-mono inline-flex items-center gap-3 text-sm text-white/45"
+          >
+            <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400/60" />
+            {t}
+          </span>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// Persistent deep-space background: twinkling stars + occasional shooting stars
+function SpaceBackground() {
+  const ref = useRef(null);
+  useEffect(() => {
+    const reduce =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const canvas = ref.current;
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W, H, raf;
+    const resize = () => {
+      W = canvas.width = window.innerWidth * DPR;
+      H = canvas.height = window.innerHeight * DPR;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    // depth: 0 = far (slow parallax, faint), 1 = near (fast parallax, bright)
+    const stars = Array.from({ length: 220 }, () => {
+      const depth = Math.random();
+      return {
+        x: Math.random(),
+        y: Math.random(),
+        r: (0.3 + depth * 1.3) * DPR,
+        tw: Math.random() * Math.PI * 2,
+        sp: 0.6 + Math.random() * 1.8,
+        depth,
+        drift: (0.1 + depth * 0.5) * DPR, // constant slow downward drift
+      };
+    });
+
+    let scrollY = 0;
+    const onScroll = () => {
+      scrollY = window.scrollY * DPR;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+
+    let shooters = [];
+    let lastSpawn = 0;
+    let nextSpawn = 600;
+    const start = performance.now();
+
+    const tick = (now) => {
+      const t = now - start;
+      ctx.clearRect(0, 0, W, H);
+
+      // twinkling + drifting + scroll-parallax stars
+      for (const s of stars) {
+        const a = 0.4 + 0.6 * Math.sin(t * 0.0012 * s.sp + s.tw);
+        // base position + constant drift + scroll parallax, wrapped vertically
+        let yy = s.y * H + t * 0.001 * s.drift * 60 + scrollY * (0.15 + s.depth * 0.5);
+        yy = ((yy % H) + H) % H;
+        const r = 0.4 + s.depth * 0.6; // bluer/brighter when nearer
+        ctx.beginPath();
+        ctx.fillStyle = `rgba(${Math.round(200 + r * 55)},${Math.round(215 + r * 40)},255,${0.15 + a * 0.55})`;
+        ctx.arc(s.x * W, yy, s.r, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      if (!reduce) {
+        // spawn shooting stars (frequent)
+        if (now - lastSpawn > nextSpawn) {
+          lastSpawn = now;
+          nextSpawn = 900 + Math.random() * 2400;
+          const fromLeft = Math.random() < 0.5;
+          shooters.push({
+            x: fromLeft ? -60 : W + 60,
+            y: Math.random() * H * 0.55,
+            vx: (fromLeft ? 1 : -1) * (9 + Math.random() * 7) * DPR,
+            vy: (3 + Math.random() * 3.5) * DPR,
+            life: 0,
+            max: 850 + Math.random() * 600,
+          });
+        }
+        // draw + update shooting stars
+        shooters = shooters.filter((s) => s.life < s.max);
+        for (const s of shooters) {
+          s.life += 16;
+          s.x += s.vx;
+          s.y += s.vy;
+          const ang = Math.atan2(s.vy, s.vx);
+          const len = Math.hypot(s.vx, s.vy) * 7;
+          const tx = s.x - Math.cos(ang) * len;
+          const ty = s.y - Math.sin(ang) * len;
+          const fade = 1 - s.life / s.max;
+          const grad = ctx.createLinearGradient(s.x, s.y, tx, ty);
+          grad.addColorStop(0, `rgba(255,255,255,${0.85 * fade})`);
+          grad.addColorStop(0.4, `rgba(190,210,255,${0.35 * fade})`);
+          grad.addColorStop(1, "rgba(255,255,255,0)");
+          ctx.strokeStyle = grad;
+          ctx.lineWidth = 2 * DPR;
+          ctx.lineCap = "round";
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y);
+          ctx.lineTo(tx, ty);
+          ctx.stroke();
+          ctx.beginPath();
+          ctx.fillStyle = `rgba(255,255,255,${fade})`;
+          ctx.arc(s.x, s.y, 1.7 * DPR, 0, Math.PI * 2);
+          ctx.fill();
+        }
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("scroll", onScroll);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    />
+  );
 }
 
 function FancyDivider() {
@@ -142,13 +340,19 @@ function AnimatedCounter({ value, suffix = "" }) {
 function SectionTitle({ eyebrow, title, desc }) {
   return (
     <div className="mb-8">
-      <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70">
-        <Star className="h-3.5 w-3.5" />
+      <div className="label-mono inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] text-fuchsia-200/80">
+        <span className="h-1.5 w-1.5 rounded-full bg-fuchsia-400" />
         <span>{eyebrow}</span>
       </div>
-      <h2 className="mt-4 text-3xl font-semibold tracking-tight text-white md:text-4xl">
+      <motion.h2
+        initial={{ opacity: 0, y: 14 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: "-10%" }}
+        transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+        className="animate-gradient-pan mt-4 bg-gradient-to-r from-white via-fuchsia-200 to-indigo-300 bg-[length:200%_auto] bg-clip-text text-3xl font-semibold tracking-tight text-transparent md:text-4xl"
+      >
         {title}
-      </h2>
+      </motion.h2>
       <p className="mt-3 max-w-2xl text-sm leading-relaxed text-white/70 md:text-base">
         {desc}
       </p>
@@ -158,30 +362,31 @@ function SectionTitle({ eyebrow, title, desc }) {
 
 function TechPill({ children }) {
   return (
-    <span className="inline-flex items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80">
+    <span className="inline-flex cursor-default items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-indigo-400/40 hover:bg-indigo-500/10 hover:text-white hover:shadow-[0_6px_18px_-8px_rgba(99,102,241,0.7)]">
       {children}
     </span>
   );
 }
 
 function ProjectCard({ p, index }) {
-  const { ref, xy } = useParallax(10);
+  const { ref, xy } = useParallax(12);
   return (
     <motion.div
       ref={ref}
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 24 }}
       whileInView={{ opacity: 1, y: 0 }}
+      whileHover={{ scale: 1.02 }}
       viewport={{ once: true, margin: "-12%" }}
-      transition={{ duration: 0.55, delay: index * 0.05 }}
-      className="group relative"
+      transition={{ duration: 0.55, delay: index * 0.06 }}
+      className="group relative [transform-style:preserve-3d]"
       style={{
-        transform: `translate3d(${xy.x * 0.15}px, ${xy.y * 0.15}px, 0)`
+        transform: `perspective(1000px) rotateX(${-xy.y * 0.5}deg) rotateY(${xy.x * 0.5}deg)`,
       }}
     >
-      <Card className="relative overflow-hidden border-white/10 bg-white/5 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.8)] backdrop-blur">
+      <Card className="relative overflow-hidden border-white/10 bg-white/5 shadow-[0_30px_80px_-40px_rgba(0,0,0,0.8)] backdrop-blur transition-shadow duration-300 group-hover:shadow-[0_40px_120px_-40px_rgba(168,85,247,0.45)]">
         <div className="absolute inset-0 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-white/10 blur-2xl" />
-          <div className="absolute -right-24 -bottom-24 h-64 w-64 rounded-full bg-white/10 blur-2xl" />
+          <div className="absolute -left-20 -top-20 h-56 w-56 rounded-full bg-indigo-500/20 blur-2xl" />
+          <div className="absolute -right-24 -bottom-24 h-64 w-64 rounded-full bg-fuchsia-500/20 blur-2xl" />
         </div>
 
         <CardHeader className="relative">
@@ -190,7 +395,7 @@ function ProjectCard({ p, index }) {
               <CardTitle className="text-white">{p.title}</CardTitle>
               <p className="mt-2 text-sm text-white/70">{p.subtitle}</p>
             </div>
-            <Badge className="border-white/10 bg-white/5 text-white/80" variant="outline">
+            <Badge className="border-fuchsia-400/30 bg-fuchsia-500/10 text-fuchsia-200" variant="outline">
               {p.tag}
             </Badge>
           </div>
@@ -205,10 +410,21 @@ function ProjectCard({ p, index }) {
 
           <p className="mt-4 text-sm leading-relaxed text-white/75">{p.desc}</p>
 
+          {p.metrics?.length ? (
+            <div className="mt-5 grid grid-cols-3 gap-px overflow-hidden rounded-2xl border border-white/10 bg-white/10">
+              {p.metrics.map((m) => (
+                <div key={m.k} className="bg-black/40 p-3 text-center transition-colors duration-300 hover:bg-fuchsia-500/10">
+                  <p className="text-sm font-semibold text-white">{m.v}</p>
+                  <p className="label-mono mt-1 text-[9px] text-white/45">{m.k}</p>
+                </div>
+              ))}
+            </div>
+          ) : null}
+
           <div className="mt-5 flex flex-wrap items-center gap-3">
             {p.links?.live && (
               <Button
-                className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                 onClick={() => window.open(p.links.live, "_blank")}
               >
                 <Globe className="mr-2 h-4 w-4" />
@@ -216,26 +432,25 @@ function ProjectCard({ p, index }) {
                 <ExternalLink className="ml-2 h-4 w-4 opacity-80" />
               </Button>
             )}
-            {p.links?.code && (
-              <Button
-                variant="outline"
-                className="border-white/15 bg-transparent text-white hover:bg-white/10"
-                onClick={() => window.open(p.links.code, "_blank")}
-              >
-                <Github className="mr-2 h-4 w-4" />
-                Code
-              </Button>
-            )}
           </div>
 
           <div className="mt-6 h-px w-full bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
           <div className="mt-4 flex items-center justify-between text-xs text-white/60">
-            <span className="inline-flex items-center gap-2">
-              <span className="h-2 w-2 rounded-full bg-white/60" />
+            <span className="label-mono inline-flex items-center gap-2 text-[10px]">
+              <span className="relative flex h-2 w-2">
+                {p.status === "Live" && (
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                )}
+                <span
+                  className={`relative inline-flex h-2 w-2 rounded-full ${
+                    p.status === "Live" ? "bg-emerald-400" : "bg-white/60"
+                  }`}
+                />
+              </span>
               {p.status}
             </span>
-            <span>{p.when}</span>
+            <span className="label-mono text-[10px]">{p.when}</span>
           </div>
         </CardContent>
       </Card>
@@ -288,7 +503,7 @@ export default function PortfolioShrabya() {
       phone: "+977 9748263475",
       email: "shrabya.paudel112@gmail.com",
       tagline:
-        "I've built futuristic, web apps—tracking real-time game stats, generating missions, and turning performance into rewards.",
+        "I design and build full‑stack web platforms — tracking real‑time game stats, orchestrating missions, and turning player performance into rewards.",
       socials: {
         github: "https://github.com/Backky",
         linkedin: "https://www.linkedin.com/in/shrabya-paudel-703055394/?trk=public-profile-join-page",
@@ -309,29 +524,23 @@ export default function PortfolioShrabya() {
   const projects = useMemo(
     () => [
       {
-        title: "Rewardly.gg – Tracker‑Reward Web Application",
+        title: "Rewardly – Tracker‑Reward Web Application",
         subtitle:
           "A full‑stack MERN platform that tracks player stats (Valorant, Apex, CS2), assigns missions, and rewards users with BankCoins.",
         tag: "Flagship",
         stack: ["MongoDB", "Express", "React", "Node.js", "JWT", "Cron", "APIs"],
         desc:
-          "Includes account linking + verification (PUUID), mission seeding, progress tracking, reward claiming, admin mission management, and a futuristic dashboard UI.",
+          "Includes account linking + verification (PUUID), mission seeding, progress tracking, reward claiming, offerwalls, eSewa cash‑outs, admin mission management, and a futuristic dashboard UI.",
         links: {
-          live: "#",
-          code: "#",
+          live: "https://rewardly.click",
+          code: "https://github.com/Backky",
         },
-        status: "Active development",
-        when: "2025",
-      },
-      {
-        title: "Personal Portfolio Website",
-        subtitle: "Responsive, animated portfolio to showcase projects and achievements.",
-        tag: "UI/UX",
-        stack: ["React", "Tailwind", "Framer Motion"],
-        desc:
-          "Designed with smooth scroll, micro‑interactions, and performance-friendly animations.",
-        links: { live: "#", code: "#" },
-        status: "Polishing",
+        metrics: [
+          { k: "Games tracked", v: "3" },
+          { k: "Auth", v: "JWT · PUUID" },
+          { k: "Payouts", v: "eSewa" },
+        ],
+        status: "Live",
         when: "2025",
       },
           ],
@@ -396,6 +605,7 @@ export default function PortfolioShrabya() {
   );
 
   // UI state
+  const [scrolled, setScrolled] = useState(false);
   const [active, setActive] = useState("about");
   const [menuOpen, setMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -408,6 +618,7 @@ export default function PortfolioShrabya() {
     const ids = nav.map((n) => n.id);
     const onScroll = () => {
       const y = window.scrollY;
+      setScrolled(y > 30);
       let best = ids[0];
       let bestDist = Number.POSITIVE_INFINITY;
       for (const id of ids) {
@@ -437,20 +648,69 @@ export default function PortfolioShrabya() {
   const { ref: heroRef, xy: heroXY } = useParallax(22);
 
   return (
-    <div className="min-h-screen bg-black text-white">
+    <div className="min-h-screen overflow-x-clip bg-black text-white">
+      <ScrollProgress />
       {/* Background */}
       <div className="fixed inset-0 -z-10">
+        <SpaceBackground />
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_12%_10%,rgba(255,255,255,0.10),transparent_55%),radial-gradient(1000px_circle_at_88%_18%,rgba(255,255,255,0.08),transparent_52%),radial-gradient(1000px_circle_at_45%_92%,rgba(255,255,255,0.06),transparent_52%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.06),transparent_35%,rgba(255,255,255,0.04))]" />
-        <GlowBlob className="left-[-120px] top-[-120px] h-[360px] w-[360px] bg-white" />
-        <GlowBlob className="right-[-180px] top-[120px] h-[420px] w-[420px] bg-white" />
-        <GlowBlob className="left-[20%] bottom-[-220px] h-[520px] w-[520px] bg-white" />
+        <GlowBlob className="animate-drift left-[-120px] top-[-120px] h-[360px] w-[360px] bg-indigo-500" />
+        <GlowBlob className="animate-float-y-slow right-[-180px] top-[120px] h-[420px] w-[420px] bg-fuchsia-500" />
+        <GlowBlob className="animate-drift left-[20%] bottom-[-220px] h-[520px] w-[520px] bg-cyan-500" />
+        {/* 3D perspective grid floor */}
+        <div
+          aria-hidden="true"
+          className="absolute inset-x-0 bottom-0 h-[55vh] [perspective:600px]"
+        >
+          <div className="grid-floor absolute inset-0 origin-bottom [transform:rotateX(72deg)]" />
+        </div>
         <GrainOverlay />
+      </div>
+
+      {/* Fixed side rails (fill the gutters on wide screens) */}
+      <div className="pointer-events-none fixed inset-y-0 left-5 z-40 hidden flex-col items-center justify-end gap-5 pb-6 xl:flex">
+        <a
+          href={profile.socials.github}
+          target="_blank"
+          rel="noreferrer"
+          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
+          aria-label="GitHub"
+        >
+          <Github className="h-5 w-5" />
+        </a>
+        <a
+          href={profile.socials.linkedin}
+          target="_blank"
+          rel="noreferrer"
+          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
+          aria-label="LinkedIn"
+        >
+          <Linkedin className="h-5 w-5" />
+        </a>
+        <a
+          href={`mailto:${profile.email}`}
+          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
+          aria-label="Email"
+        >
+          <Mail className="h-5 w-5" />
+        </a>
+        <div className="h-24 w-px bg-gradient-to-b from-white/30 to-transparent" />
+      </div>
+
+      <div className="pointer-events-none fixed inset-y-0 right-5 z-40 hidden flex-col items-center justify-end gap-6 pb-6 xl:flex">
+        <a
+          href={`mailto:${profile.email}`}
+          className="pointer-events-auto [writing-mode:vertical-rl] text-xs tracking-widest text-white/50 transition-colors hover:text-fuchsia-300"
+        >
+          {profile.email}
+        </a>
+        <div className="h-24 w-px bg-gradient-to-b from-white/30 to-transparent" />
       </div>
 
       {/* Top Nav */}
       <header className="sticky top-0 z-50 border-b border-white/10 bg-black/55 backdrop-blur">
-        <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
+        <div className="mx-auto flex max-w-[1400px] items-center justify-between px-4 py-3 sm:px-6 lg:px-10">
           <button
             className="group flex items-center gap-3"
             onClick={() => scrollToId("top")}
@@ -484,7 +744,7 @@ export default function PortfolioShrabya() {
                 onClick={() => scrollToId(n.id)}
                 className={`rounded-full px-3 py-2 text-sm transition-colors ${
                   active === n.id
-                    ? "bg-white/10 text-white"
+                    ? "bg-gradient-to-r from-indigo-500/30 to-fuchsia-500/30 text-white ring-1 ring-inset ring-white/10"
                     : "text-white/70 hover:bg-white/5 hover:text-white"
                 }`}
               >
@@ -492,7 +752,7 @@ export default function PortfolioShrabya() {
               </button>
             ))}
             <Button
-              className="ml-2 border border-white/10 bg-white/10 text-white hover:bg-white/15"
+              className="ml-2 border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
               onClick={() => setContactOpen(true)}
             >
               Let’s talk <ArrowRight className="ml-2 h-4 w-4" />
@@ -512,7 +772,7 @@ export default function PortfolioShrabya() {
 
         {menuOpen ? (
           <div className="border-t border-white/10 bg-black/70 backdrop-blur md:hidden">
-            <div className="mx-auto max-w-6xl px-4 py-3">
+            <div className="mx-auto max-w-[1400px] px-4 py-3 sm:px-6 lg:px-10">
               <div className="grid gap-2">
                 {nav.map((n) => (
                   <button
@@ -529,7 +789,7 @@ export default function PortfolioShrabya() {
                   </button>
                 ))}
                 <Button
-                  className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                  className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                   onClick={() => {
                     scrollToId("contact");
                     setMenuOpen(false);
@@ -544,7 +804,7 @@ export default function PortfolioShrabya() {
       </header>
 
       {/* Hero */}
-      <main id="top" className="mx-auto max-w-6xl px-4">
+      <main id="top" className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-10">
         {/* Contact Modal */}
         {contactOpen ? (
           <motion.div
@@ -622,7 +882,7 @@ export default function PortfolioShrabya() {
                       Tip: include Discord tag or phone so I can reply.
                     </p>
                     <Button
-                      className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                      className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                       disabled={contactLoading}
                       onClick={async () => {
                         const name = contactForm.name.trim();
@@ -672,21 +932,30 @@ export default function PortfolioShrabya() {
                 initial={{ opacity: 0, y: 18 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.7, ease: "easeOut" }}
-                className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/70"
+                className="label-mono inline-flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-[10px] text-emerald-200/80"
               >
-                <Sparkles className="h-3.5 w-3.5" />
-                <span>Available for internships & projects</span>
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-emerald-400" />
+                </span>
+                <span>Available for internships &amp; projects</span>
               </motion.div>
 
               <motion.h1
                 initial={{ opacity: 0, y: 16 }}
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.75, delay: 0.1, ease: "easeOut" }}
-                className="mt-5 text-4xl font-semibold tracking-tight md:text-6xl"
+                className="mt-6 text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl md:text-7xl"
               >
-                Building <span className="text-white/80">fancy</span>,
+                Crafting{" "}
+                <span className="animate-gradient-pan bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-cyan-400 bg-[length:200%_auto] bg-clip-text text-transparent">
+                  elegant
+                </span>
+                ,
                 <br />
-                futuristic web experiences.
+                high‑performance
+                <br />
+                <span className="text-white/90">web products.</span>
               </motion.h1>
 
               <motion.p
@@ -705,7 +974,7 @@ export default function PortfolioShrabya() {
                 className="mt-7 flex flex-wrap items-center gap-3"
               >
                 <Button
-                  className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                  className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                   onClick={() => scrollToId("projects")}
                 >
                   View projects <ArrowRight className="ml-2 h-4 w-4" />
@@ -775,11 +1044,20 @@ export default function PortfolioShrabya() {
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative"
+              className="relative [transform-style:preserve-3d]"
               style={{
-                transform: `translate3d(${heroXY.x * 0.12}px, ${heroXY.y * 0.12}px, 0)`,
+                transform: `perspective(1100px) rotateX(${-heroXY.y * 0.35}deg) rotateY(${heroXY.x * 0.35}deg)`,
               }}
             >
+              {/* spinning conic glow ring */}
+              <div
+                aria-hidden="true"
+                className="animate-spin-slow pointer-events-none absolute -inset-8 -z-10 rounded-full opacity-40 blur-2xl"
+                style={{
+                  background:
+                    "conic-gradient(from 0deg, rgba(99,102,241,0.5), rgba(217,70,239,0.5), rgba(34,211,238,0.5), rgba(99,102,241,0.5))",
+                }}
+              />
               <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_40px_120px_-60px_rgba(0,0,0,0.9)] backdrop-blur">
                 <div className="absolute inset-0">
                   <motion.div
@@ -820,9 +1098,19 @@ export default function PortfolioShrabya() {
                     </div>
                   </div>
 
-                  <div className="mt-4 rounded-2xl border border-white/10 bg-black/30 p-4">
+                  <a
+                    href="https://rewardly.click"
+                    target="_blank"
+                    rel="noreferrer"
+                    className="mt-4 block rounded-2xl border border-white/10 bg-black/30 p-4 transition-colors hover:border-fuchsia-400/40 hover:bg-black/40"
+                  >
                     <p className="text-xs text-white/60">Signature project</p>
-                    <p className="mt-2 text-sm font-medium">Rewardly.gg</p>
+                    <p className="mt-2 inline-flex items-center gap-2 text-sm font-medium">
+                      <span className="bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
+                        rewardly.click
+                      </span>
+                      <ExternalLink className="h-3.5 w-3.5 text-white/60" />
+                    </p>
                     <p className="mt-1 text-xs text-white/70">
                       Missions • Verification • Rewards • Admin tools
                     </p>
@@ -838,7 +1126,7 @@ export default function PortfolioShrabya() {
                       <span>Progress</span>
                       <span>Shipping features</span>
                     </div>
-                  </div>
+                  </a>
 
                   <div className="mt-4 grid gap-3">
                     <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
@@ -861,7 +1149,9 @@ export default function PortfolioShrabya() {
           </div>
         </section>
 
-        <FancyDivider />
+        <div className="-mx-4 mt-12 sm:-mx-6 lg:-mx-10">
+          <TechMarquee />
+        </div>
 
         {/* About */}
         <section id="about" className="py-8">
@@ -872,30 +1162,36 @@ export default function PortfolioShrabya() {
           />
 
           <div className="grid gap-4 md:grid-cols-3">
-            <Card className="border-white/10 bg-white/5 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-white">What I do</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-white/75">
-                Full‑stack MERN apps, dashboards, API integrations, auth systems, and admin panels.
-              </CardContent>
-            </Card>
-            <Card className="border-white/10 bg-white/5 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-white">What I like</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-white/75">
-                Full Stack MERN Dev, futuristic UI, clean logic, and shipping features step‑by‑step.
-              </CardContent>
-            </Card>
-            <Card className="border-white/10 bg-white/5 backdrop-blur">
-              <CardHeader>
-                <CardTitle className="text-white">What I’m improving</CardTitle>
-              </CardHeader>
-              <CardContent className="text-sm text-white/75">
-                Advanced testing, scalability patterns, and deeper analytics instrumentation.
-              </CardContent>
-            </Card>
+            <HoverCard delay={0}>
+              <Card className="h-full border-white/10 bg-white/5 backdrop-blur transition-colors duration-300 group-hover/hc:border-fuchsia-400/30">
+                <CardHeader>
+                  <CardTitle className="text-white">What I do</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-white/75">
+                  Full‑stack MERN apps, dashboards, API integrations, auth systems, and admin panels.
+                </CardContent>
+              </Card>
+            </HoverCard>
+            <HoverCard delay={0.08}>
+              <Card className="h-full border-white/10 bg-white/5 backdrop-blur transition-colors duration-300 group-hover/hc:border-fuchsia-400/30">
+                <CardHeader>
+                  <CardTitle className="text-white">What I like</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-white/75">
+                  Full Stack MERN Dev, modern UI, clean logic, and shipping features step‑by‑step.
+                </CardContent>
+              </Card>
+            </HoverCard>
+            <HoverCard delay={0.16}>
+              <Card className="h-full border-white/10 bg-white/5 backdrop-blur transition-colors duration-300 group-hover/hc:border-fuchsia-400/30">
+                <CardHeader>
+                  <CardTitle className="text-white">What I’m improving</CardTitle>
+                </CardHeader>
+                <CardContent className="text-sm text-white/75">
+                  Advanced testing, scalability patterns, and deeper analytics instrumentation.
+                </CardContent>
+              </Card>
+            </HoverCard>
           </div>
 
           <div className="mt-6 grid gap-4 md:grid-cols-2">
@@ -958,19 +1254,21 @@ export default function PortfolioShrabya() {
           />
 
           <div className="grid gap-4 md:grid-cols-2">
-            {skills.map((s) => (
-              <Card key={s.title} className="border-white/10 bg-white/5 backdrop-blur">
-                <CardHeader>
-                  <CardTitle className="text-white">{s.title}</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <div className="flex flex-wrap gap-2">
-                    {s.items.map((it) => (
-                      <TechPill key={it}>{it}</TechPill>
-                    ))}
-                  </div>
-                </CardContent>
-              </Card>
+            {skills.map((s, i) => (
+              <HoverCard key={s.title} delay={i * 0.08}>
+                <Card className="h-full border-white/10 bg-white/5 backdrop-blur transition-colors duration-300 group-hover/hc:border-indigo-400/30">
+                  <CardHeader>
+                    <CardTitle className="text-white">{s.title}</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="flex flex-wrap gap-2">
+                      {s.items.map((it) => (
+                        <TechPill key={it}>{it}</TechPill>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </HoverCard>
             ))}
           </div>
 
@@ -979,11 +1277,11 @@ export default function PortfolioShrabya() {
               <div>
                 <p className="text-sm font-semibold">My current focus</p>
                 <p className="mt-1 text-sm text-white/70">
-                  Making Rewardly.gg more scalable: mission pools, validation, cash-out system and better admin workflows.
+                  Making rewardly.click more scalable: mission pools, validation, cash-out system and better admin workflows.
                 </p>
               </div>
               <Button
-                className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                 onClick={() => scrollToId("projects")}
               >
                 See it in action <ArrowRight className="ml-2 h-4 w-4" />
@@ -1002,7 +1300,7 @@ export default function PortfolioShrabya() {
             desc="Here are the projects that best show my style: real functionality, clean logic, and fancy UI polish. Replace links with your real GitHub/Live URLs."
           />
 
-          <div className="grid gap-4 md:grid-cols-3">
+          <div className="mx-auto grid max-w-2xl gap-5">
             {projects.map((p, i) => (
               <ProjectCard key={p.title} p={p} index={i} />
             ))}
@@ -1013,20 +1311,12 @@ export default function PortfolioShrabya() {
               <div>
                 <p className="text-sm font-semibold">Want to see more?</p>
                 <p className="mt-1 text-sm text-white/70">
-                  I can add case studies, screenshots, and a full “Rewardly.gg” walkthrough section — plus more projects if you want.
+                  I can add case studies, screenshots, and a full “rewardly.click” walkthrough section — plus more projects if you want.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
                 <Button
-                  variant="outline"
-                  className="border-white/15 bg-transparent text-white hover:bg-white/10"
-                  onClick={() => window.open(profile.socials.github, "_blank")}
-                >
-                  <Github className="mr-2 h-4 w-4" />
-                  GitHub
-                </Button>
-                <Button
-                  className="border border-white/10 bg-white/10 text-white hover:bg-white/15"
+                  className="border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 text-white shadow-[0_8px_30px_-10px_rgba(168,85,247,0.6)] transition-transform duration-200 hover:scale-[1.03] hover:from-indigo-500 hover:to-fuchsia-500 active:scale-95"
                   onClick={() => setContactOpen(true)}
                 >
                   Contact <ArrowRight className="ml-2 h-4 w-4" />
@@ -1054,7 +1344,7 @@ export default function PortfolioShrabya() {
               <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
                 <p className="text-sm font-medium">Next milestone</p>
                 <p className="mt-2 text-sm text-white/75">
-                  Publish Rewardly.gg MVP, add full Steam linking + owned games list, and expand mission system.
+                  Scale rewardly.click: grow the offerwall network, harden fraud checks, add richer analytics, and ship a mobile‑first experience.
                 </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <TechPill>Security</TechPill>
@@ -1067,10 +1357,25 @@ export default function PortfolioShrabya() {
           </div>
         </section>
 
-        <FancyDivider />
 
-        
       </main>
+
+      {/* Scroll-to-explore indicator (bottom-right) */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: !scrolled ? 1 : 0 }}
+        transition={{ duration: 0.5 }}
+        className="pointer-events-none fixed bottom-6 right-6 z-40 hidden items-center gap-3 sm:flex"
+      >
+        <span className="label-mono text-[10px] text-white/55">Scroll to explore</span>
+        <span className="relative flex h-9 w-5 items-start justify-center rounded-full border border-white/25">
+          <motion.span
+            className="mt-1.5 h-1.5 w-1 rounded-full bg-white/80"
+            animate={{ y: [0, 10, 0], opacity: [1, 0.2, 1] }}
+            transition={{ duration: 1.6, repeat: Infinity, ease: "easeInOut" }}
+          />
+        </span>
+      </motion.div>
 
       {/* Toast */}
       {toast ? (
