@@ -672,44 +672,61 @@ export default function PortfolioShrabya() {
         <GrainOverlay />
       </div>
 
-      {/* Fixed side rails (fill the gutters on wide screens) */}
-      <div className="pointer-events-none fixed inset-y-0 left-5 z-40 hidden flex-col items-center justify-end gap-5 pb-6 xl:flex">
-        <a
-          href={profile.socials.github}
-          target="_blank"
-          rel="noreferrer"
-          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
-          aria-label="GitHub"
-        >
-          <Github className="h-5 w-5" />
-        </a>
-        <a
-          href={profile.socials.linkedin}
-          target="_blank"
-          rel="noreferrer"
-          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
-          aria-label="LinkedIn"
-        >
-          <Linkedin className="h-5 w-5" />
-        </a>
-        <a
-          href={`mailto:${profile.email}`}
-          className="pointer-events-auto text-white/50 transition-colors hover:-translate-y-0.5 hover:text-fuchsia-300"
-          aria-label="Email"
-        >
-          <Mail className="h-5 w-5" />
-        </a>
-        <div className="h-24 w-px bg-gradient-to-b from-white/30 to-transparent" />
-      </div>
+      {/* Contact dock — compact button that expands the full list on hover */}
+      <div className="group fixed bottom-6 left-6 z-40 hidden flex-col items-start sm:flex">
+        <div className="mb-3 flex flex-col gap-2">
+          {[
+            {
+              icon: Github,
+              label: "GitHub",
+              href: profile.socials.github,
+              ext: true,
+            },
+            {
+              icon: Linkedin,
+              label: "LinkedIn",
+              href: profile.socials.linkedin,
+              ext: true,
+            },
+            {
+              icon: Mail,
+              label: profile.email,
+              href: `https://mail.google.com/mail/?view=cm&fs=1&to=${profile.email}`,
+              ext: true,
+            },
+            {
+              icon: Phone,
+              label: profile.phone,
+              href: `tel:${profile.phone.replace(/\s+/g, "")}`,
+            },
+            {
+              icon: MapPin,
+              label: profile.location,
+              href: `https://maps.google.com/?q=${encodeURIComponent(profile.location)}`,
+              ext: true,
+            },
+          ].map((c, i, arr) => (
+            <a
+              key={c.label}
+              href={c.href}
+              {...(c.ext ? { target: "_blank", rel: "noreferrer" } : {})}
+              style={{ transitionDelay: `${(arr.length - 1 - i) * 55}ms` }}
+              className="pointer-events-none flex translate-y-3 items-center gap-3 rounded-full border border-white/10 bg-black/70 px-4 py-2 text-sm text-white/80 opacity-0 shadow-[0_10px_30px_-12px_rgba(0,0,0,0.8)] backdrop-blur transition-all duration-300 ease-out hover:border-fuchsia-400/50 hover:text-white hover:shadow-[0_10px_30px_-10px_rgba(168,85,247,0.6)] group-hover:pointer-events-auto group-hover:translate-y-0 group-hover:opacity-100"
+            >
+              <c.icon className="h-4 w-4 text-fuchsia-300" />
+              <span>{c.label}</span>
+            </a>
+          ))}
+        </div>
 
-      <div className="pointer-events-none fixed inset-y-0 right-5 z-40 hidden flex-col items-center justify-end gap-6 pb-6 xl:flex">
-        <a
-          href={`mailto:${profile.email}`}
-          className="pointer-events-auto [writing-mode:vertical-rl] text-xs tracking-widest text-white/50 transition-colors hover:text-fuchsia-300"
+        <button
+          type="button"
+          aria-label="Contact"
+          className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 px-4 py-2.5 text-sm font-medium text-white shadow-[0_12px_34px_-12px_rgba(168,85,247,0.7)] transition-all duration-300 hover:scale-105 hover:from-indigo-500 hover:to-fuchsia-500 group-hover:scale-105"
         >
-          {profile.email}
-        </a>
-        <div className="h-24 w-px bg-gradient-to-b from-white/30 to-transparent" />
+          <Mail className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5" />
+          <span>Contact</span>
+        </button>
       </div>
 
       {/* Top Nav */}
