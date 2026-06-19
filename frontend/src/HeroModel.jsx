@@ -24,7 +24,7 @@ function Helmet() {
     if (!ref.current) return;
     // rotate only to follow the cursor, eased
     const targetY = mouse.current.x * 0.9;
-    const targetX = -mouse.current.y * 0.5;
+    const targetX = mouse.current.y * 0.5;
     ref.current.rotation.y += (targetY - ref.current.rotation.y) * 0.08;
     ref.current.rotation.x += (targetX - ref.current.rotation.x) * 0.08;
   });
