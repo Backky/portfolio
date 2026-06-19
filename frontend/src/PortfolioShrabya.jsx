@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { motion, useAnimation, useInView, useScroll, useSpring, useTransform } from "framer-motion";
 import {
   ArrowRight,
@@ -14,6 +14,7 @@ import {
   Star,
   Trophy,
 } from "lucide-react";
+const HeroModel = lazy(() => import("./HeroModel"));
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
@@ -514,12 +515,15 @@ export default function PortfolioShrabya() {
     []
   );
 
-  const nav = [
-    { id: "about", label: "About" },
-    { id: "skills", label: "Skills" },
-    { id: "projects", label: "Projects" },
-    { id: "journey", label: "Journey" },
-      ];
+  const nav = useMemo(
+    () => [
+      { id: "about", label: "About" },
+      { id: "skills", label: "Skills" },
+      { id: "projects", label: "Projects" },
+      { id: "journey", label: "Journey" },
+    ],
+    []
+  );
 
   const projects = useMemo(
     () => [
@@ -1058,93 +1062,43 @@ export default function PortfolioShrabya() {
                     "conic-gradient(from 0deg, rgba(99,102,241,0.5), rgba(217,70,239,0.5), rgba(34,211,238,0.5), rgba(99,102,241,0.5))",
                 }}
               />
-              <div className="relative overflow-hidden rounded-[28px] border border-white/10 bg-white/5 p-6 shadow-[0_40px_120px_-60px_rgba(0,0,0,0.9)] backdrop-blur">
-                <div className="absolute inset-0">
-                  <motion.div
-                    className="absolute -left-24 -top-24 h-72 w-72 rounded-full bg-white/10 blur-3xl"
-                    animate={{ x: [0, 30, 0], y: [0, 18, 0] }}
-                    transition={{ duration: 10, repeat: Infinity, ease: "easeInOut" }}
-                  />
-                  <motion.div
-                    className="absolute -right-28 -bottom-28 h-80 w-80 rounded-full bg-white/10 blur-3xl"
-                    animate={{ x: [0, -26, 0], y: [0, -16, 0] }}
-                    transition={{ duration: 12, repeat: Infinity, ease: "easeInOut" }}
-                  />
+              <div className="relative h-[360px] overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_40px_120px_-60px_rgba(0,0,0,0.9)] backdrop-blur sm:h-[460px]">
+                {/* ambient color glows behind the model */}
+                <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
+                <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
+
+                {/* interactive 3D model */}
+                <Suspense
+                  fallback={
+                    <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
+                      Loading 3D…
+                    </div>
+                  }
+                >
+                  <HeroModel />
+                </Suspense>
+
+                {/* corner labels */}
+                <div className="label-mono pointer-events-none absolute right-3 top-3 text-[9px] text-white/40">
+                  Interactive · WebGL
                 </div>
 
-                <div className="relative">
-                  <div className="flex items-center justify-between">
-                    <div className="inline-flex items-center gap-2 rounded-full border border-white/10 bg-black/30 px-3 py-1 text-xs text-white/70">
-                      <Trophy className="h-3.5 w-3.5" />
-                      <span>Highlights</span>
-                    </div>
-                    <div className="text-xs text-white/55">Live metrics</div>
-                  </div>
-
-                  <div className="mt-5 grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-xs text-white/60">Projects built</p>
-                      <p className="mt-2 text-2xl font-semibold">
-                        <AnimatedCounter value={12} suffix="+" />
-                      </p>
-                      <p className="mt-2 text-xs text-white/60">Web apps, dashboards, prototypes</p>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-xs text-white/60">Stacks used</p>
-                      <p className="mt-2 text-2xl font-semibold">
-                        <AnimatedCounter value={8} suffix="+" />
-                      </p>
-                      <p className="mt-2 text-xs text-white/60">MERN, APIs, auth, UI motion</p>
-                    </div>
-                  </div>
-
-                  <a
-                    href="https://rewardly.click"
-                    target="_blank"
-                    rel="noreferrer"
-                    className="mt-4 block rounded-2xl border border-white/10 bg-black/30 p-4 transition-colors hover:border-fuchsia-400/40 hover:bg-black/40"
-                  >
-                    <p className="text-xs text-white/60">Signature project</p>
-                    <p className="mt-2 inline-flex items-center gap-2 text-sm font-medium">
-                      <span className="bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
-                        rewardly.click
-                      </span>
-                      <ExternalLink className="h-3.5 w-3.5 text-white/60" />
-                    </p>
-                    <p className="mt-1 text-xs text-white/70">
-                      Missions • Verification • Rewards • Admin tools
-                    </p>
-                    <div className="mt-3 h-2 overflow-hidden rounded-full bg-white/10">
-                      <motion.div
-                        className="h-full w-2/3 bg-white/50"
-                        initial={{ width: "20%" }}
-                        animate={{ width: ["22%", "76%", "66%"] }}
-                        transition={{ duration: 3.6, repeat: Infinity, ease: "easeInOut" }}
-                      />
-                    </div>
-                    <div className="mt-2 flex items-center justify-between text-[11px] text-white/55">
-                      <span>Progress</span>
-                      <span>Shipping features</span>
-                    </div>
-                  </a>
-
-                  <div className="mt-4 grid gap-3">
-                    <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                      <p className="text-xs text-white/60">Focus</p>
-                      <div className="mt-2 flex flex-wrap gap-2">
-                        <TechPill>Clean UX</TechPill>
-                        <TechPill>Fast APIs</TechPill>
-                        <TechPill>Secure auth</TechPill>
-                        <TechPill>Neon polish</TechPill>
-                      </div>
-                    </div>
-                  </div>
-                </div>
+                {/* rewardly caption */}
+                <a
+                  href="https://rewardly.click"
+                  target="_blank"
+                  rel="noreferrer"
+                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 backdrop-blur transition-colors hover:border-fuchsia-400/40 hover:bg-black/55"
+                >
+                  <span className="inline-flex items-center gap-2 text-sm font-medium">
+                    <span className="bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
+                      rewardly.click
+                    </span>
+                    <span className="label-mono text-[9px] text-white/45">Flagship</span>
+                  </span>
+                  <ExternalLink className="h-3.5 w-3.5 text-white/60" />
+                </a>
               </div>
-
-              <p className="mt-4 text-center text-xs text-white/55">
-               
-              </p>
             </motion.div>
           </div>
         </section>
