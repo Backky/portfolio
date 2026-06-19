@@ -1,6 +1,6 @@
-import { Suspense, useRef } from "react";
+import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Float, Environment, Html, useProgress } from "@react-three/drei";
+import { useGLTF, Environment, Html, useProgress } from "@react-three/drei";
 
 // served from public/models — BASE_URL handles the /portfolio/ gh-pages prefix
 const MODEL_URL = `${import.meta.env.BASE_URL}models/helmet.glb`;
@@ -8,14 +8,27 @@ const MODEL_URL = `${import.meta.env.BASE_URL}models/helmet.glb`;
 function Helmet() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
+  const mouse = useRef({ x: 0, y: 0 });
 
-  // ease the model toward the pointer for an interactive, parallax feel
-  useFrame((state) => {
+  // track the cursor across the WHOLE window, even outside the canvas
+  useEffect(() => {
+    const onMove = (e) => {
+      mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
+    };
+    window.addEventListener("mousemove", onMove);
+    return () => window.removeEventListener("mousemove", onMove);
+  }, []);
+
+  useFrame((_, delta) => {
     if (!ref.current) return;
-    const px = state.pointer.x;
-    const py = state.pointer.y;
-    ref.current.rotation.y += (px * 0.6 - ref.current.rotation.y) * 0.06;
-    ref.current.rotation.x += (-py * 0.35 - ref.current.rotation.x) * 0.06;
+    // always-on rotation
+    ref.current.rotation.y += delta * 0.5;
+    // cursor influence (tilt + gentle sway), eased
+    const targetX = -mouse.current.y * 0.5;
+    ref.current.rotation.x += (targetX - ref.current.rotation.x) * 0.06;
+    ref.current.position.x += (mouse.current.x * 0.4 - ref.current.position.x) * 0.05;
+    ref.current.position.y += (-mouse.current.y * 0.25 - ref.current.position.y) * 0.05;
   });
 
   return <primitive ref={ref} object={scene} scale={2.3} />;
@@ -45,9 +58,7 @@ export default function HeroModel() {
       <directionalLight position={[-6, -2, -4]} intensity={0.7} color="#8b5cf6" />
       <pointLight position={[0, 3, 4]} intensity={20} color="#22d3ee" />
       <Suspense fallback={<Loader />}>
-        <Float speed={1.6} rotationIntensity={0.5} floatIntensity={1.3}>
-          <Helmet />
-        </Float>
+        <Helmet />
         <Environment preset="city" />
       </Suspense>
     </Canvas>

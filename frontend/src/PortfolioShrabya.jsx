@@ -1028,62 +1028,22 @@ export default function PortfolioShrabya() {
               </motion.div>
             </div>
 
-            {/* Hero visual */}
+            {/* Hero visual — bare 3D model, no panel/background */}
             <motion.div
               initial={{ opacity: 0, scale: 0.98 }}
               animate={{ opacity: 1, scale: 1 }}
               transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative [transform-style:preserve-3d]"
-              style={{
-                transform: `perspective(1100px) rotateX(${-heroXY.y * 0.35}deg) rotateY(${heroXY.x * 0.35}deg)`,
-              }}
+              className="relative h-[360px] sm:h-[460px]"
             >
-              {/* spinning conic glow ring */}
-              <div
-                aria-hidden="true"
-                className="animate-spin-slow pointer-events-none absolute -inset-8 -z-10 rounded-full opacity-40 blur-2xl"
-                style={{
-                  background:
-                    "conic-gradient(from 0deg, rgba(99,102,241,0.5), rgba(217,70,239,0.5), rgba(34,211,238,0.5), rgba(99,102,241,0.5))",
-                }}
-              />
-              <div className="relative h-[360px] overflow-hidden rounded-[28px] border border-white/10 bg-gradient-to-b from-white/[0.06] to-white/[0.02] shadow-[0_40px_120px_-60px_rgba(0,0,0,0.9)] backdrop-blur sm:h-[460px]">
-                {/* ambient color glows behind the model */}
-                <div className="pointer-events-none absolute -left-20 -top-20 h-64 w-64 rounded-full bg-indigo-500/20 blur-3xl" />
-                <div className="pointer-events-none absolute -right-24 -bottom-24 h-72 w-72 rounded-full bg-fuchsia-500/20 blur-3xl" />
-
-                {/* interactive 3D model */}
-                <Suspense
-                  fallback={
-                    <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
-                      Loading 3D…
-                    </div>
-                  }
-                >
-                  <HeroModel />
-                </Suspense>
-
-                {/* corner labels */}
-                <div className="label-mono pointer-events-none absolute right-3 top-3 text-[9px] text-white/40">
-                  Interactive · WebGL
-                </div>
-
-                {/* rewardly caption */}
-                <a
-                  href="https://rewardly.click"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="absolute bottom-3 left-3 right-3 flex items-center justify-between rounded-2xl border border-white/10 bg-black/40 px-4 py-2.5 backdrop-blur transition-colors hover:border-fuchsia-400/40 hover:bg-black/55"
-                >
-                  <span className="inline-flex items-center gap-2 text-sm font-medium">
-                    <span className="bg-gradient-to-r from-indigo-300 to-fuchsia-300 bg-clip-text text-transparent">
-                      rewardly.click
-                    </span>
-                    <span className="label-mono text-[9px] text-white/45">Flagship</span>
-                  </span>
-                  <ExternalLink className="h-3.5 w-3.5 text-white/60" />
-                </a>
-              </div>
+              <Suspense
+                fallback={
+                  <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
+                    Loading 3D…
+                  </div>
+                }
+              >
+                <HeroModel />
+              </Suspense>
             </motion.div>
           </div>
         </section>
