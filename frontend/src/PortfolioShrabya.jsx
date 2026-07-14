@@ -140,30 +140,16 @@ function TechMarquee() {
   );
 }
 
-// Soap-bubble burst wherever the user clicks empty space
-function BubbleLayer() {
-  const [bursts, setBursts] = useState([]);
+// Shockwave ripple wherever the user clicks empty space
+function RippleLayer() {
+  const [ripples, setRipples] = useState([]);
 
   useEffect(() => {
     let id = 0;
     const spawn = (x, y) => {
-      const count = 9 + Math.floor(Math.random() * 5);
-      const bubbles = Array.from({ length: count }, () => ({
-        id: id++,
-        x: x + (Math.random() - 0.5) * 28,
-        y: y + (Math.random() - 0.5) * 18,
-        size: 7 + Math.random() * 22,
-        sway: `${(Math.random() - 0.5) * 90}px`,
-        rise: `${-(70 + Math.random() * 130)}px`,
-        dur: 1.2 + Math.random() * 1.2,
-        delay: Math.random() * 0.15,
-      }));
-      setBursts((b) => [...b, ...bubbles]);
-      // clean up after the longest bubble finishes
-      setTimeout(
-        () => setBursts((b) => b.filter((bb) => !bubbles.includes(bb))),
-        2800
-      );
+      const burst = { id: id++, x, y };
+      setRipples((r) => [...r, burst]);
+      setTimeout(() => setRipples((r) => r.filter((b) => b !== burst)), 1200);
     };
 
     const onClick = (e) => {
@@ -176,37 +162,49 @@ function BubbleLayer() {
         return;
       spawn(e.clientX, e.clientY);
     };
-    const onHeroBubbles = (e) => spawn(e.detail.x, e.detail.y);
+    const onHeroWave = (e) => spawn(e.detail.x, e.detail.y);
 
     window.addEventListener("click", onClick);
-    window.addEventListener("spawn-bubbles", onHeroBubbles);
+    window.addEventListener("click-wave", onHeroWave);
     return () => {
       window.removeEventListener("click", onClick);
-      window.removeEventListener("spawn-bubbles", onHeroBubbles);
+      window.removeEventListener("click-wave", onHeroWave);
     };
   }, []);
 
   return (
     <div className="pointer-events-none fixed inset-0 z-[70]" aria-hidden="true">
-      {bursts.map((b) => (
-        <span
-          key={b.id}
-          className="absolute rounded-full"
-          style={{
-            left: b.x,
-            top: b.y,
-            width: b.size,
-            height: b.size,
-            "--sway": b.sway,
-            "--rise": b.rise,
-            animation: `bubble-rise ${b.dur}s ease-out ${b.delay}s forwards`,
-            background:
-              "radial-gradient(circle at 32% 30%, rgba(255,255,255,0.85) 0%, rgba(255,255,255,0.25) 22%, rgba(180,210,255,0.12) 55%, rgba(160,200,255,0.28) 100%)",
-            border: "1px solid rgba(255,255,255,0.35)",
-            boxShadow:
-              "inset -2px -2px 5px rgba(120,170,255,0.25), 0 0 8px rgba(160,200,255,0.18)",
-          }}
-        />
+      {ripples.map((b) => (
+        <span key={b.id} className="absolute" style={{ left: b.x, top: b.y }}>
+          {/* soft flash core */}
+          <span
+            className="absolute rounded-full"
+            style={{
+              width: 90,
+              height: 90,
+              transform: "translate(-50%, -50%)",
+              animation: "ripple-flash 0.55s ease-out forwards",
+              background:
+                "radial-gradient(circle, rgba(199,210,254,0.5) 0%, rgba(199,210,254,0.12) 45%, transparent 70%)",
+            }}
+          />
+          {/* expanding rings */}
+          {[0, 0.12, 0.26].map((delay, i) => (
+            <span
+              key={i}
+              className="absolute rounded-full"
+              style={{
+                width: 150,
+                height: 150,
+                transform: "translate(-50%, -50%)",
+                border: `${2 - i * 0.5}px solid rgba(196,181,253,${0.65 - i * 0.15})`,
+                boxShadow: "0 0 14px rgba(165,180,252,0.25)",
+                animation: `ripple-wave ${0.75 + i * 0.15}s cubic-bezier(0.16,1,0.3,1) ${delay}s forwards`,
+                opacity: 0,
+              }}
+            />
+          ))}
+        </span>
       ))}
     </div>
   );
@@ -726,7 +724,7 @@ export default function PortfolioShrabya() {
   return (
     <div className="min-h-screen overflow-x-clip bg-black text-white">
       <ScrollProgress />
-      <BubbleLayer />
+      <RippleLayer />
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <SpaceBackground />
