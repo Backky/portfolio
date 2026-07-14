@@ -125,13 +125,13 @@ function Character() {
       // envelope: raise, hold+oscillate, lower
       const k = ease(clamp01(p / 0.22)) * ease(clamp01((1 - p) / 0.28));
       if (B.rArm) {
-        B.rArm.rotation.x += 0.35 * k;   // slightly forward
-        B.rArm.rotation.z += 1.55 * k;   // raise up (flipped from before)
+        B.rArm.rotation.x += 0.35 * k;   // slightly forward (toward viewer)
+        B.rArm.rotation.z -= 1.6 * k;    // raise OUT to the side, hand up high
       }
-      if (B.rShoulder) B.rShoulder.rotation.z += 0.2 * k;
+      if (B.rShoulder) B.rShoulder.rotation.z -= 0.15 * k;
       if (B.rForeArm) {
-        B.rForeArm.rotation.x += 0.25 * k;
-        B.rForeArm.rotation.z -= Math.sin(t * 12) * 0.45 * k; // the wave itself
+        B.rForeArm.rotation.z -= 0.2 * k;
+        B.rForeArm.rotation.z += Math.sin(t * 12) * 0.5 * k; // the wave itself
       }
       if (B.spine1) B.spine1.rotation.z -= 0.06 * k; // slight lean into it
       if (B.head) B.head.rotation.z -= 0.12 * k;
