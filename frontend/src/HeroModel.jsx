@@ -11,7 +11,7 @@ const ease = (v) => v * v * (3 - 2 * v); // smoothstep
 const easeOut = (v) => 1 - Math.pow(1 - v, 3);
 
 // gesture durations (seconds)
-const DUR = { wave: 1.9, shake: 0.9, flinch: 0.65, jump: 0.8, kneel: 3.6, fall: 4.4 };
+const DUR = { wave: 1.9, shake: 0.9, flinch: 0.65, jump: 0.8, kneel: 3.6, fall: 6.5 };
 
 function Character() {
   const group = useRef();
@@ -200,56 +200,117 @@ function Character() {
       if (p > 0.2 && p < 0.75 && B.spine2)
         B.spine2.rotation.z += Math.sin(t * 22) * 0.015;
     } else if (ge.type === "fall") {
-      // knocked down: recoil -> topple with gravity -> lie -> heroic rise
-      const s = 1; // fall backward
+      // Cinematic: shot in chest -> slow painful collapse -> Bond kip-up
+      const MAXTILT = 1.5; // fully lying on the back
       let tilt = 0;
-      if (p < 0.1) {
-        // hit recoil: chest caves, step of shock
-        const k = ease(p / 0.1);
-        if (B.spine1) B.spine1.rotation.x -= 0.3 * k;
-        if (B.head) B.head.rotation.x -= 0.25 * k;
-        fallK = k * 0.3;
-      } else if (p < 0.4) {
-        // gravity-accelerated topple + settle bounce at the end
-        const f = (p - 0.1) / 0.3;
-        tilt = f * f; // accelerating
-        fallK = 0.3 + 0.7 * tilt;
-        // arms windmill/flail while falling
-        const fl = Math.sin(f * Math.PI);
-        if (B.lArm) B.lArm.rotation.z -= 0.9 * fl;
-        if (B.rArm) B.rArm.rotation.z += 0.9 * fl;
-        if (B.lForeArm) B.lForeArm.rotation.z += 0.5 * fl;
-        if (B.rForeArm) B.rForeArm.rotation.z -= 0.5 * fl;
-      } else if (p < 0.72) {
-        // lying flat: sprawled, breathing
-        tilt = 1 + Math.sin((p - 0.4) * 40) * 0.03 * Math.exp(-(p - 0.4) * 14);
+      let drop = 0; // extra hip drop (metres)
+
+      // right hand clutches the chest wound
+      const clutch = (k) => {
+        if (B.rArm) B.rArm.rotation.x += 0.7 * k;
+        if (B.rForeArm) B.rForeArm.rotation.x -= 1.0 * k;
+        if (B.rShoulder) B.rShoulder.rotation.x += 0.2 * k;
+      };
+
+      if (p < 0.06) {
+        // A. SHOT IMPACT — sharp jolt, chest caves, head snaps back
+        const k = ease(p / 0.06);
+        if (B.spine1) B.spine1.rotation.x -= 0.45 * k;
+        if (B.spine2) B.spine2.rotation.x -= 0.2 * k;
+        if (B.head) B.head.rotation.x -= 0.3 * k;
+        clutch(k);
+        fallK = k * 0.4;
+      } else if (p < 0.32) {
+        // B. PAIN STAGGER — slow hunch over the wound, knees weaken, tremble
+        const k = ease(clamp01((p - 0.06) / 0.16));
+        if (B.spine) B.spine.rotation.x += 0.18 * k;
+        if (B.spine1) B.spine1.rotation.x += 0.32 * k; // hunch forward over wound
+        if (B.head) B.head.rotation.x += 0.18 * k;     // looks down at chest
+        clutch(1);
+        if (B.lArm) B.lArm.rotation.z -= 0.2 * k;      // free arm drifts out
+        if (B.lKnee) B.lKnee.rotation.x += 0.45 * k;
+        if (B.rKnee) B.rKnee.rotation.x += 0.45 * k;
+        if (B.lThigh) B.lThigh.rotation.x -= 0.12 * k;
+        if (B.rThigh) B.rThigh.rotation.x -= 0.12 * k;
+        drop = 0.4 * k;
+        if (B.spine2) B.spine2.rotation.z += Math.sin(t * 26) * 0.02 * k; // tremble
+        fallK = 0.4 + 0.3 * k;
+      } else if (p < 0.5) {
+        // C. TOPPLE BACKWARD — pained, accelerating; free arm braces back
+        const f = (p - 0.32) / 0.18;
+        tilt = f * f;
+        clutch(1 - f * 0.6);
+        if (B.lArm) B.lArm.rotation.z -= 0.6 * Math.sin(f * Math.PI);
+        if (B.lForeArm) B.lForeArm.rotation.x -= 0.4 * Math.sin(f * Math.PI);
+        if (B.lKnee) B.lKnee.rotation.x += 0.45;
+        if (B.rKnee) B.rKnee.rotation.x += 0.45;
+        drop = 0.4 + 0.3 * f;
         fallK = 1;
-        const breathe = Math.sin(t * 3.2) * 0.02;
-        if (B.spine1) B.spine1.rotation.x += breathe;
-        if (B.lArm) B.lArm.rotation.z -= 0.55;
-        if (B.rArm) B.rArm.rotation.z += 0.55;
-        if (B.lKnee) B.lKnee.rotation.x += 0.35;
-        if (B.rKnee) B.rKnee.rotation.x += 0.2;
+      } else if (p < 0.72) {
+        // D. DOWN — lying on back in pain, chest heaving, hand on wound
+        tilt = 1 + Math.sin((p - 0.5) * 36) * 0.025 * Math.exp(-(p - 0.5) * 12);
+        fallK = 1;
+        clutch(0.7);
+        if (B.spine1) B.spine1.rotation.x += Math.sin(t * 3) * 0.03; // breathing
+        if (B.lArm) B.lArm.rotation.z -= 0.5;   // sprawled arm
+        if (B.lKnee) B.lKnee.rotation.x += 0.3;
+        if (B.rKnee) B.rKnee.rotation.x += 0.15;
+        if (B.head) B.head.rotation.x += 0.1;
+        drop = 0.7;
+      } else if (p < 0.82) {
+        // E. COIL — Bond gathers: legs swing up over, hips lift for the kip
+        const f = ease((p - 0.72) / 0.1);
+        tilt = 1 - 0.15 * f;
+        fallK = 1 - 0.2 * f;
+        // knees to chest, thighs up over the torso
+        if (B.lThigh) B.lThigh.rotation.x -= 1.4 * f;
+        if (B.rThigh) B.rThigh.rotation.x -= 1.4 * f;
+        if (B.lKnee) B.lKnee.rotation.x += 1.5 * f;
+        if (B.rKnee) B.rKnee.rotation.x += 1.5 * f;
+        if (B.spine1) B.spine1.rotation.x += 0.3 * f; // curls up
+        if (B.head) B.head.rotation.x += 0.25 * f;
+        // arms tuck in beside the body (palms down for the push)
+        if (B.lArm) B.lArm.rotation.z -= 0.15 * f;
+        if (B.rArm) B.rArm.rotation.z += 0.15 * f;
+        drop = 0.7 - 0.15 * f;
+      } else if (p < 0.92) {
+        // F. KIP-UP — explosive kung-fu leg throw: legs snap down/forward,
+        // torso whips upright, springs to the feet
+        const f = easeOut((p - 0.82) / 0.1);
+        tilt = 0.85 * (1 - f);
+        fallK = 0.8 * (1 - f);
+        // legs throw from up-over to down-front (extend hard)
+        const throwK = Math.sin(Math.PI * clamp01(f)) ; // peak mid-throw
+        if (B.lThigh) B.lThigh.rotation.x -= (1.4 - 1.7 * f);
+        if (B.rThigh) B.rThigh.rotation.x -= (1.4 - 1.7 * f);
+        if (B.lKnee) B.lKnee.rotation.x += (1.5 - 1.2 * f);
+        if (B.rKnee) B.rKnee.rotation.x += (1.5 - 1.2 * f);
+        if (B.spine1) B.spine1.rotation.x += 0.3 * (1 - f);
+        // arms swing out for momentum
+        if (B.lArm) B.lArm.rotation.z -= 0.5 * throwK;
+        if (B.rArm) B.rArm.rotation.z += 0.5 * throwK;
+        drop = 0.55 * (1 - f);
       } else {
-        // heroic rise: sit up, gather legs, push to stand
-        const f = (p - 0.72) / 0.28;
-        const rise = easeOut(f);
-        tilt = 1 - rise;
-        fallK = tilt;
-        // sit-up crunch early in the rise
-        const crunch = Math.sin(Math.PI * clamp01(f * 1.4)) * 0.45;
-        if (B.spine) B.spine.rotation.x += crunch * 0.5;
-        if (B.spine1) B.spine1.rotation.x += crunch * 0.5;
-        if (B.head) B.head.rotation.x += crunch * 0.4;
-        // legs gather under the body
-        const gather = Math.sin(Math.PI * clamp01(f * 1.2));
-        if (B.lKnee) B.lKnee.rotation.x += 1.1 * gather;
-        if (B.rKnee) B.rKnee.rotation.x += 1.1 * gather;
-        if (B.lThigh) B.lThigh.rotation.x -= 0.6 * gather;
-        if (B.rThigh) B.rThigh.rotation.x -= 0.6 * gather;
+        // G. BOND LANDING — settle into a low kung-fu ready guard, then relax
+        const f = ease((p - 0.92) / 0.08);
+        tilt = 0;
+        fallK = 0;
+        const guard = Math.sin(Math.PI * f); // brief pose that fades to idle
+        // slight crouch, right hand up in guard, left hand low
+        if (B.lKnee) B.lKnee.rotation.x += 0.4 * guard;
+        if (B.rKnee) B.rKnee.rotation.x += 0.55 * guard;
+        if (B.rThigh) B.rThigh.rotation.x -= 0.2 * guard;
+        if (B.rArm) B.rArm.rotation.x += 0.55 * guard;
+        if (B.rForeArm) B.rForeArm.rotation.x -= 0.9 * guard;
+        if (B.lArm) B.lArm.rotation.z -= 0.3 * guard;
+        if (B.lForeArm) B.lForeArm.rotation.x -= 0.5 * guard;
+        if (B.spine1) B.spine1.rotation.x += 0.12 * guard;
+        if (B.head) B.head.rotation.x -= 0.05 * guard; // chin up, confident
+        drop = 0.25 * guard;
       }
-      g.rotation.x = -1.45 * tilt * s;
-      baseY -= 0.12 * Math.min(tilt, 1);
+
+      g.rotation.x = -MAXTILT * tilt;
+      baseY -= drop;
     }
 
     if (ge.type !== "fall") {
