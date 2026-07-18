@@ -140,6 +140,125 @@ function TechMarquee() {
   );
 }
 
+// Live GitHub contributions heatmap (no token; free public API)
+function GitHubContributions({ username = "Backky" }) {
+  const [data, setData] = useState(null);
+  const [status, setStatus] = useState("loading");
+
+  useEffect(() => {
+    let alive = true;
+    fetch(`https://github-contributions-api.jogruber.de/v4/${username}?y=last`)
+      .then((r) => (r.ok ? r.json() : Promise.reject(r.status)))
+      .then((j) => {
+        if (!alive) return;
+        setData(j);
+        setStatus("ok");
+      })
+      .catch(() => alive && setStatus("error"));
+    return () => {
+      alive = false;
+    };
+  }, [username]);
+
+  // cell colour by contribution level (matches site accent palette)
+  const levelClass = [
+    "bg-white/[0.05]",
+    "bg-indigo-500/30",
+    "bg-indigo-500/60",
+    "bg-fuchsia-500/70",
+    "bg-fuchsia-400",
+  ];
+
+  // group flat day list into weekday-aligned week columns
+  const weeks = useMemo(() => {
+    if (!data?.contributions?.length) return [];
+    const days = data.contributions;
+    const out = [];
+    let week = new Array(new Date(days[0].date).getDay()).fill(null);
+    for (const d of days) {
+      week.push(d);
+      if (week.length === 7) {
+        out.push(week);
+        week = [];
+      }
+    }
+    if (week.length) out.push([...week, ...Array(7 - week.length).fill(null)]);
+    return out;
+  }, [data]);
+
+  const total = data?.total?.lastYear ?? 0;
+
+  return (
+    <section className="py-8">
+      <SectionTitle
+        eyebrow="Activity"
+        title="Live from GitHub"
+        desc="My real contribution graph over the last year — it updates automatically as I push code."
+      />
+
+      <div className="rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur sm:p-6">
+        <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <p className="text-sm text-white/80">
+            {status === "ok" ? (
+              <>
+                <span className="font-semibold text-white">{total}</span> contributions
+                in the last year
+              </>
+            ) : status === "error" ? (
+              "Couldn't load contributions right now."
+            ) : (
+              "Loading contributions…"
+            )}
+          </p>
+          <a
+            href={`https://github.com/${username}`}
+            target="_blank"
+            rel="noreferrer"
+            className="label-mono inline-flex items-center gap-2 text-[10px] text-white/55 transition-colors hover:text-fuchsia-300"
+          >
+            <Github className="h-3.5 w-3.5" />
+            @{username}
+          </a>
+        </div>
+
+        {status === "ok" && (
+          <>
+            <div className="overflow-x-auto pb-2">
+              <div className="flex gap-[3px]">
+                {weeks.map((week, wi) => (
+                  <div key={wi} className="flex flex-col gap-[3px]">
+                    {week.map((day, di) => (
+                      <motion.span
+                        key={di}
+                        initial={{ opacity: 0, scale: 0.5 }}
+                        whileInView={{ opacity: 1, scale: 1 }}
+                        viewport={{ once: true }}
+                        transition={{ duration: 0.25, delay: Math.min(wi * 0.006, 1) }}
+                        title={day ? `${day.date}: ${day.count} contributions` : ""}
+                        className={`h-[11px] w-[11px] rounded-[3px] ${
+                          day ? levelClass[day.level] : "bg-transparent"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="mt-3 flex items-center justify-end gap-2 text-[10px] text-white/50">
+              <span>Less</span>
+              {levelClass.map((c, i) => (
+                <span key={i} className={`h-[11px] w-[11px] rounded-[3px] ${c}`} />
+              ))}
+              <span>More</span>
+            </div>
+          </>
+        )}
+      </div>
+    </section>
+  );
+}
+
 // Shockwave ripple wherever the user clicks empty space
 function RippleLayer() {
   const [ripples, setRipples] = useState([]);
@@ -1327,6 +1446,10 @@ export default function PortfolioShrabya() {
           </div>
         </section>
 
+        <FancyDivider />
+
+        {/* Live GitHub activity */}
+        <GitHubContributions username="Backky" />
 
       </main>
 
