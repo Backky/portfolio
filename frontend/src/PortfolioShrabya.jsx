@@ -1386,7 +1386,7 @@ export default function PortfolioShrabya() {
           <SectionTitle
             eyebrow="Projects"
             title="Work that’s meant to be used."
-            desc="Here are the projects that best show my style: real functionality, clean logic, and fancy UI polish. Replace links with your real GitHub/Live URLs."
+            desc="The work that best shows how I build: real functionality, clean logic, and a polished interface — shipped and running in production."
           />
 
           <div className="mx-auto grid max-w-2xl gap-5">
@@ -1400,7 +1400,7 @@ export default function PortfolioShrabya() {
               <div>
                 <p className="text-sm font-semibold">Want to see more?</p>
                 <p className="mt-1 text-sm text-white/70">
-                  I can add case studies, screenshots, and a full “rewardly.click” walkthrough section — plus more projects if you want.
+                  Happy to walk you through how rewardly.click was built — the architecture, the API integrations, or the payment flow. Just reach out.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">
@@ -1422,7 +1422,7 @@ export default function PortfolioShrabya() {
           <SectionTitle
             eyebrow="Journey"
             title="Learning fast. Shipping faster."
-            desc="A short timeline of where I’ve studied and worked. Add awards, certifications, and internships here later."
+            desc="A short timeline of where I’ve studied and worked, and what I’m building next."
           />
 
           <div className="relative grid gap-4">
