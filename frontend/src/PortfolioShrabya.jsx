@@ -551,6 +551,20 @@ function SectionTitle({ eyebrow, title, desc }) {
 }
 
 function TechPill({ children }) {
+  // "Learning: X" renders as a dashed, muted pill so it never reads as
+  // claimed expertise
+  const text = typeof children === "string" ? children : "";
+  const learning = text.startsWith("Learning:");
+
+  if (learning) {
+    return (
+      <span className="inline-flex cursor-default items-center gap-1.5 rounded-full border border-dashed border-cyan-400/40 bg-cyan-500/5 px-3 py-1 text-xs text-cyan-200/80 transition-all duration-200 hover:-translate-y-0.5 hover:border-cyan-300/60 hover:text-cyan-100">
+        <span className="label-mono text-[8px] opacity-70">LEARNING</span>
+        {text.replace("Learning:", "").trim()}
+      </span>
+    );
+  }
+
   return (
     <span className="inline-flex cursor-default items-center rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs text-white/80 transition-all duration-200 hover:-translate-y-0.5 hover:scale-105 hover:border-indigo-400/40 hover:bg-indigo-500/10 hover:text-white hover:shadow-[0_6px_18px_-8px_rgba(99,102,241,0.7)]">
       {children}
@@ -736,6 +750,25 @@ export default function PortfolioShrabya() {
         status: "Live",
         when: "2025",
       },
+      // ---------------------------------------------------------------
+      // AI PROJECT SLOT — uncomment and fill in once the project ships.
+      // Everything below (metrics grid, live dot, tags) already renders.
+      // ---------------------------------------------------------------
+      // {
+      //   title: "",                       // e.g. "DocuMind — RAG Document Assistant"
+      //   subtitle: "",                    // one-line what it does
+      //   tag: "AI",
+      //   stack: ["React", "Node.js", "Python", "LLM API", "Vector DB"],
+      //   desc: "",                        // how it works, briefly
+      //   links: { live: "", code: "" },
+      //   metrics: [
+      //     { k: "Model", v: "" },
+      //     { k: "Retrieval", v: "" },
+      //     { k: "Latency", v: "" },
+      //   ],
+      //   status: "Live",
+      //   when: "2026",
+      // },
           ],
     []
   );
@@ -787,7 +820,14 @@ export default function PortfolioShrabya() {
       },
       {
         title: "Data / AI",
-        items: ["Python", "Data analytics basics", "ML fundamentals"],
+        items: [
+          "Python",
+          "Data analytics basics",
+          "ML fundamentals",
+          // honest: these are in progress, marked as such in the UI
+          "Learning: LLM APIs",
+          "Learning: RAG",
+        ],
       },
       {
         title: "Product",
