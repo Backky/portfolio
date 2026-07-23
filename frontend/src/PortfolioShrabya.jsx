@@ -750,25 +750,26 @@ export default function PortfolioShrabya() {
         status: "Live",
         when: "2025",
       },
-      // ---------------------------------------------------------------
-      // AI PROJECT SLOT — uncomment and fill in once the project ships.
-      // Everything below (metrics grid, live dot, tags) already renders.
-      // ---------------------------------------------------------------
-      // {
-      //   title: "",                       // e.g. "DocuMind — RAG Document Assistant"
-      //   subtitle: "",                    // one-line what it does
-      //   tag: "AI",
-      //   stack: ["React", "Node.js", "Python", "LLM API", "Vector DB"],
-      //   desc: "",                        // how it works, briefly
-      //   links: { live: "", code: "" },
-      //   metrics: [
-      //     { k: "Model", v: "" },
-      //     { k: "Retrieval", v: "" },
-      //     { k: "Latency", v: "" },
-      //   ],
-      //   status: "Live",
-      //   when: "2026",
-      // },
+      {
+        title: "Citation Verifier — AI Hallucination Checker",
+        subtitle:
+          "Checks whether AI-generated citations are real or hallucinated, and whether the source actually says what's claimed.",
+        tag: "AI",
+        stack: ["Node.js", "Express", "Gemini AI", "CrossRef API", "Semantic Scholar", "Vercel"],
+        desc:
+          "Paste AI-generated text and the app auto-detects citations (URLs, DOIs, academic references), verifies each source actually exists via CrossRef and Semantic Scholar, then uses AI to check if the source really supports the claim. Results stream in real time with Verified, Fabricated, Unverifiable, or Misrepresented badges.",
+        links: {
+          live: "https://citation-verifier-alpha.vercel.app",
+          code: "https://github.com/Backky/citationverify_AI",
+        },
+        metrics: [
+          { k: "AI model", v: "Gemini" },
+          { k: "Sources", v: "CrossRef · S2" },
+          { k: "Results", v: "Streamed" },
+        ],
+        status: "Live",
+        when: "2026",
+      },
           ],
     []
   );
@@ -821,11 +822,12 @@ export default function PortfolioShrabya() {
       {
         title: "Data / AI",
         items: [
+          "LLM APIs (Gemini)",
+          "AI-powered features",
+          "Streaming responses",
           "Python",
-          "Data analytics basics",
           "ML fundamentals",
-          // honest: these are in progress, marked as such in the UI
-          "Learning: LLM APIs",
+          // honest: still in progress, marked as such in the UI
           "Learning: RAG",
         ],
       },
@@ -1429,7 +1431,7 @@ export default function PortfolioShrabya() {
             desc="The work that best shows how I build: real functionality, clean logic, and a polished interface — shipped and running in production."
           />
 
-          <div className="mx-auto grid max-w-2xl gap-5">
+          <div className="grid gap-5 md:grid-cols-2">
             {projects.map((p, i) => (
               <ProjectCard key={p.title} p={p} index={i} />
             ))}
