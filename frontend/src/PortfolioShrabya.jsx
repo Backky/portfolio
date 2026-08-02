@@ -1,5 +1,5 @@
 import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
-import { motion, useAnimation, useInView, useScroll, useSpring, useTransform } from "framer-motion";
+import { AnimatePresence, motion, useAnimation, useInView, useScroll, useSpring, useTransform } from "framer-motion";
 import {
   ArrowRight,
   Download,
@@ -788,6 +788,81 @@ function CodeSkills({ skills }) {
   );
 }
 
+// A word that slides up into place through a clipped mask (staggered reveal)
+function MaskWord({ children, delay = 0 }) {
+  return (
+    <span className="inline-block overflow-hidden pb-[0.12em] align-bottom">
+      <motion.span
+        className="inline-block"
+        initial={{ y: "115%" }}
+        animate={{ y: 0 }}
+        transition={{ duration: 0.8, delay, ease: [0.22, 1, 0.36, 1] }}
+      >
+        {children}
+      </motion.span>
+    </span>
+  );
+}
+
+// Full-screen "ENTER" curtain; fades out and unmounts to reveal the hero
+function IntroGate({ onEnter }) {
+  return (
+    <motion.div
+      key="intro-gate"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.65, ease: [0.65, 0, 0.35, 1] }}
+      className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black px-6"
+    >
+      <motion.p
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15, duration: 0.6 }}
+        className="label-mono mb-7 text-[10px] text-white/40"
+      >
+        Shrabya Paudel · Portfolio
+      </motion.p>
+
+      <h1
+        className="text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
+        style={{ WebkitTextStroke: "1.5px rgba(255,255,255,0.9)", color: "transparent" }}
+      >
+        <MaskWord delay={0.2}>WELCOME</MaskWord>
+      </h1>
+
+      <motion.p
+        initial={{ opacity: 0, y: 14 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.55, duration: 0.6 }}
+        className="mt-5 text-center text-sm text-white/50 sm:text-base"
+      >
+        Crafting high-performance digital experiences
+      </motion.p>
+
+      <motion.button
+        initial={{ opacity: 0, y: 16 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.8, duration: 0.6 }}
+        onClick={onEnter}
+        className="group mt-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_40px_-12px_rgba(168,85,247,0.7)] transition-all duration-300 hover:scale-105 hover:from-indigo-500 hover:to-fuchsia-500"
+      >
+        ENTER
+        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+      </motion.button>
+
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 1.1 }}
+        className="pointer-events-none absolute inset-0 -z-10"
+      >
+        <div className="animate-drift absolute left-[15%] top-[20%] h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
+        <div className="animate-float-y-slow absolute bottom-[18%] right-[18%] h-72 w-72 rounded-full bg-fuchsia-600/20 blur-3xl" />
+      </motion.div>
+    </motion.div>
+  );
+}
+
 // ---------- main page ----------
 export default function PortfolioShrabya() {
   // Replace with your real info
@@ -932,7 +1007,16 @@ export default function PortfolioShrabya() {
   );
 
   // UI state
+  const [intro, setIntro] = useState(true);
   const [scrolled, setScrolled] = useState(false);
+
+  // lock scrolling while the intro curtain is up
+  useEffect(() => {
+    document.body.style.overflow = intro ? "hidden" : "";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, [intro]);
   const [active, setActive] = useState("about");
   const [menuOpen, setMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -976,6 +1060,9 @@ export default function PortfolioShrabya() {
 
   return (
     <div className="min-h-screen overflow-x-clip bg-black text-white">
+      <AnimatePresence>
+        {intro && <IntroGate onEnter={() => setIntro(false)} />}
+      </AnimatePresence>
       <ScrollProgress />
       <RippleLayer />
       {/* Background */}
@@ -1254,22 +1341,21 @@ export default function PortfolioShrabya() {
                 <span>Available for internships &amp; projects</span>
               </motion.div>
 
-              <motion.h1
-                initial={{ opacity: 0, y: 16 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.75, delay: 0.1, ease: "easeOut" }}
-                className="mt-6 text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl md:text-7xl"
-              >
-                Crafting{" "}
-                <span className="animate-gradient-pan bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-cyan-400 bg-[length:200%_auto] bg-clip-text text-transparent">
-                  elegant
-                </span>
-                ,
+              <h1 className="mt-6 text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-6xl md:text-7xl">
+                <MaskWord delay={0.1}>Crafting</MaskWord>{" "}
+                <MaskWord delay={0.18}>
+                  <span className="animate-gradient-pan bg-gradient-to-r from-indigo-400 via-fuchsia-400 to-cyan-400 bg-[length:200%_auto] bg-clip-text text-transparent">
+                    elegant
+                  </span>
+                  ,
+                </MaskWord>
                 <br />
-                high‑performance
+                <MaskWord delay={0.26}>high‑performance</MaskWord>
                 <br />
-                <span className="text-white/90">web products.</span>
-              </motion.h1>
+                <MaskWord delay={0.34}>
+                  <span className="text-white/90">web products.</span>
+                </MaskWord>
+              </h1>
 
               <motion.p
                 initial={{ opacity: 0, y: 12 }}
