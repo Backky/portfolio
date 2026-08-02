@@ -1308,12 +1308,6 @@ export default function PortfolioShrabya() {
           <div className="grid-floor absolute inset-0 origin-bottom [transform:rotateX(72deg)]" />
         </div>
         <GrainOverlay />
-        {/* ambient 3D robot face — rendered above the overlays so nothing dims it */}
-        <div className="pointer-events-none absolute inset-0 opacity-100">
-          <Suspense fallback={null}>
-            <FaceBackground />
-          </Suspense>
-        </div>
       </div>
 
       {/* Fixed left social rail (sample-style) */}
@@ -1559,7 +1553,7 @@ export default function PortfolioShrabya() {
         ) : null}
 
         <section className="relative pt-12 md:pt-16" ref={heroRef}>
-          <div className="max-w-3xl">
+          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-12">
             <div>
               <motion.div
                 initial={{ opacity: 0, y: 18 }}
@@ -1669,6 +1663,19 @@ export default function PortfolioShrabya() {
                 <TechPill>Admin dashboards</TechPill>
                 <TechPill>Modern UI/animations</TechPill>
               </motion.div>
+            </div>
+
+            {/* 3D robot face (foreground, visible) */}
+            <div className="relative h-[360px] sm:h-[460px]">
+              <Suspense
+                fallback={
+                  <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
+                    Loading 3D…
+                  </div>
+                }
+              >
+                <FaceBackground />
+              </Suspense>
             </div>
           </div>
         </section>

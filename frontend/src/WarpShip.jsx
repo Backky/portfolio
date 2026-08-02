@@ -17,8 +17,8 @@ function Ship() {
     const p = clamp01((performance.now() - start.current) / DUR);
     const { nx, ny, near } = warpShipPath(p);
 
-    // fly across the screen; z brings it near in the middle, far at the ends
-    ref.current.position.set(nx * 4.2, ny * 2.6, -3.2 + near * 4.6);
+    // fly across the screen (raised up); z brings it near in the middle
+    ref.current.position.set(nx * 4.2, ny * 2.6 + 1.1, -3.2 + near * 4.6);
 
     // heading: nose points along travel (up-right into the warp)
     ref.current.rotation.y = -Math.PI / 2 + 0.9;
