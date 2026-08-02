@@ -13,8 +13,8 @@ function Ship() {
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.y = -Math.PI / 2 + 0.35 + Math.sin(t * 0.6) * 0.06;
-    ref.current.rotation.x = 0.12 + Math.sin(t * 3) * 0.02; // slight dive + shake
+    ref.current.rotation.y = -Math.PI / 2 + 0.5 + Math.sin(t * 0.6) * 0.06; // 3/4 view
+    ref.current.rotation.x = 0.4 + Math.sin(t * 3) * 0.02; // tilt so we see it from above
     ref.current.rotation.z = Math.sin(t * 0.9) * 0.12; // gentle bank
     ref.current.position.y = Math.sin(t * 3) * 0.03; // engine vibration
   });

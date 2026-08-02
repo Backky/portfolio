@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment } from "@react-three/drei";
+import { useGLTF, Environment, Center, Bounds } from "@react-three/drei";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/robotface.glb`;
 
@@ -27,7 +27,11 @@ function Face() {
     ref.current.rotation.x += (tx - ref.current.rotation.x) * 0.04;
   });
 
-  return <primitive ref={ref} object={scene} scale={2.6} position={[0, -0.4, 0]} />;
+  return (
+    <group ref={ref}>
+      <primitive object={scene} />
+    </group>
+  );
 }
 
 export default function FaceBackground() {
@@ -37,13 +41,18 @@ export default function FaceBackground() {
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
     >
-      <ambientLight intensity={0.55} />
-      <directionalLight position={[5, 5, 5]} intensity={2} />
-      <directionalLight position={[-5, -2, -4]} intensity={1.1} color="#6366f1" />
-      <pointLight position={[0, 2, 4]} intensity={12} color="#22d3ee" />
-      <pointLight position={[3, -1, -2]} intensity={8} color="#d946ef" />
+      <ambientLight intensity={0.6} />
+      <directionalLight position={[5, 5, 5]} intensity={2.2} />
+      <directionalLight position={[-5, -2, -4]} intensity={1.2} color="#6366f1" />
+      <pointLight position={[0, 2, 4]} intensity={14} color="#22d3ee" />
+      <pointLight position={[3, -1, -2]} intensity={9} color="#d946ef" />
       <Suspense fallback={null}>
-        <Face />
+        {/* auto-center & auto-fit so the face is always framed on screen */}
+        <Bounds fit clip margin={1.4}>
+          <Center>
+            <Face />
+          </Center>
+        </Bounds>
         <Environment preset="night" />
       </Suspense>
     </Canvas>

@@ -1280,7 +1280,7 @@ export default function PortfolioShrabya() {
       <div className="fixed inset-0 -z-10">
         <SpaceBackground />
         {/* ambient 3D robot face behind the whole site */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.55]">
+        <div className="pointer-events-none absolute inset-0 opacity-[0.8]">
           <Suspense fallback={null}>
             <FaceBackground />
           </Suspense>
