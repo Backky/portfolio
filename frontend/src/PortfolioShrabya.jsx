@@ -888,7 +888,7 @@ function WarpTransition({ onDone }) {
     resize();
     window.addEventListener("resize", resize);
 
-    const N = 520;
+    const N = 340;
     const mk = () => ({
       x: (Math.random() - 0.5) * W,
       y: (Math.random() - 0.5) * H,
@@ -904,21 +904,22 @@ function WarpTransition({ onDone }) {
       // accelerate hard, then ease at arrival
       const speed = (2 + p * p * 65) * DPR * 6;
 
-      ctx.fillStyle = "rgba(0,0,4,0.35)"; // motion-blur trails
+      // deep-space motion-blur trails (dark, so streaks never wash to white)
+      ctx.fillStyle = "rgba(3,4,14,0.30)";
       ctx.fillRect(0, 0, W, H);
 
-      // galaxy we're flying toward (grows as we approach)
-      const gR = W * (0.05 + p * 0.55);
+      // refined violet destination glow (subtle, grows as we approach)
+      const gR = W * (0.06 + p * 0.5);
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, gR);
-      g.addColorStop(0, `rgba(180,200,255,${0.05 + p * 0.15})`);
-      g.addColorStop(0.4, `rgba(120,90,220,${0.04 + p * 0.1})`);
+      g.addColorStop(0, `rgba(150,120,255,${0.06 + p * 0.12})`);
+      g.addColorStop(0.4, `rgba(90,70,190,${0.04 + p * 0.07})`);
       g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(cx, cy, gR, 0, Math.PI * 2);
       ctx.fill();
 
-      const blue = Math.min(p * 1.6, 1);
+      // color-graded streaks: deep indigo far -> soft cyan near, capped bright
       for (const s of stars) {
         const pz = s.z;
         s.z -= speed;
@@ -932,10 +933,11 @@ function WarpTransition({ onDone }) {
         const sy = cy + (s.y / s.z) * k * DPR;
         const px = cx + (s.x / pz) * k * DPR;
         const py = cy + (s.y / pz) * k * DPR;
-        const w = Math.max(0.6, (1 - s.z / W) * 3.2) * DPR;
-        ctx.strokeStyle = `rgba(${Math.round(200 + blue * 55)},${Math.round(
-          215 + blue * 40
-        )},255,${0.5 + (1 - s.z / W) * 0.5})`;
+        const near = 1 - s.z / W; // 0 far, 1 near
+        const w = Math.max(0.5, near * 2.3) * DPR;
+        const r = Math.round(90 + near * 115);
+        const gg = Math.round(120 + near * 110);
+        ctx.strokeStyle = `rgba(${r},${gg},255,${0.1 + near * 0.5})`;
         ctx.lineWidth = w;
         ctx.beginPath();
         ctx.moveTo(px, py);
@@ -943,11 +945,23 @@ function WarpTransition({ onDone }) {
         ctx.stroke();
       }
 
-      // light-speed flash near the jump point
-      if (p > 0.78) {
-        const f = 1 - Math.abs((p - 0.86) / 0.14);
+      // calm dark vignette in the centre so the ship reads cleanly
+      const vig = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.55);
+      vig.addColorStop(0, "rgba(3,4,14,0.55)");
+      vig.addColorStop(0.3, "rgba(3,4,14,0.18)");
+      vig.addColorStop(0.62, "rgba(3,4,14,0)");
+      ctx.fillStyle = vig;
+      ctx.fillRect(0, 0, W, H);
+
+      // soft light-speed bloom near the jump (radial, not a hard white flash)
+      if (p > 0.8) {
+        const f = 1 - Math.abs((p - 0.88) / 0.12);
         if (f > 0) {
-          ctx.fillStyle = `rgba(255,255,255,${Math.max(0, f)})`;
+          const fl = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.75);
+          fl.addColorStop(0, `rgba(225,235,255,${0.8 * f})`);
+          fl.addColorStop(0.5, `rgba(150,170,255,${0.28 * f})`);
+          fl.addColorStop(1, "rgba(0,0,0,0)");
+          ctx.fillStyle = fl;
           ctx.fillRect(0, 0, W, H);
         }
       }
