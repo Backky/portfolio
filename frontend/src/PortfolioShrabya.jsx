@@ -1203,17 +1203,22 @@ function IntroGate({ onEnter }) {
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="relative"
+        className="flex justify-center"
       >
-        <h1 className="welcome-line-base text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl">
-          WELCOME
-        </h1>
-        <h1
-          aria-hidden="true"
-          className="welcome-line-glow absolute inset-0 text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
+        <svg
+          className="welcome-svg"
+          viewBox="0 0 1120 200"
+          preserveAspectRatio="xMidYMid meet"
+          role="img"
+          aria-label="Welcome"
         >
-          WELCOME
-        </h1>
+          <text className="welcome-svg-base" x="560" y="150" textAnchor="middle">
+            WELCOME
+          </text>
+          <text className="welcome-svg-glow" x="560" y="150" textAnchor="middle">
+            WELCOME
+          </text>
+        </svg>
       </motion.div>
 
       <motion.p
