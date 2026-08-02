@@ -673,7 +673,15 @@ function TimelineItem({ item, i }) {
     >
       <div className="absolute left-[10px] top-2 h-3 w-3 rounded-full border border-white/25 bg-white/20" />
       <div className="absolute left-[15px] top-5 h-[calc(100%+14px)] w-px bg-white/15" />
-      <div className="rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur">
+      <motion.div
+        drag
+        dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+        dragElastic={0.35}
+        dragTransition={{ bounceStiffness: 320, bounceDamping: 22 }}
+        whileDrag={{ scale: 1.04, rotate: -1.5, zIndex: 30 }}
+        whileHover={{ y: -3 }}
+        className="cursor-grab rounded-2xl border border-white/10 bg-white/5 p-4 backdrop-blur transition-shadow duration-300 hover:border-fuchsia-400/30 hover:shadow-[0_24px_60px_-30px_rgba(168,85,247,0.55)] active:cursor-grabbing"
+      >
         <div className="flex flex-wrap items-center justify-between gap-3">
           <div>
             <p className="text-sm font-medium text-white">{item.title}</p>
@@ -691,7 +699,7 @@ function TimelineItem({ item, i }) {
             ))}
           </div>
         ) : null}
-      </div>
+      </motion.div>
     </motion.div>
   );
 }
