@@ -696,6 +696,90 @@ function TimelineItem({ item, i }) {
   );
 }
 
+// IDE-style code editor rendering the skills as syntax-highlighted code
+function CodeSkills({ skills }) {
+  const C = {
+    kw: "text-fuchsia-400",
+    var: "text-cyan-300",
+    key: "text-indigo-300",
+    str: "text-emerald-300",
+    learn: "text-amber-300",
+    pun: "text-white/40",
+    com: "text-white/30",
+  };
+  const keyFor = {
+    Frontend: "frontend",
+    Backend: "backend",
+    "Data / AI": "ai",
+    Product: "product",
+  };
+
+  const lines = [];
+  lines.push([{ t: "// my toolkit — always growing", c: "com" }]);
+  lines.push([
+    { t: "const", c: "kw" },
+    { t: " ", c: "pun" },
+    { t: "shrabya", c: "var" },
+    { t: " = ", c: "pun" },
+    { t: "{", c: "pun" },
+  ]);
+  skills.forEach((s) => {
+    const key = keyFor[s.title] || s.title.toLowerCase().replace(/[^a-z]/g, "");
+    const parts = [
+      { t: "  " + key, c: "key" },
+      { t: ": [", c: "pun" },
+    ];
+    s.items.forEach((it, idx) => {
+      const learning = it.startsWith("Learning:");
+      const clean = it.replace("Learning:", "").trim();
+      parts.push({ t: `"${clean}"`, c: learning ? "learn" : "str" });
+      if (idx < s.items.length - 1) parts.push({ t: ", ", c: "pun" });
+    });
+    parts.push({ t: "],", c: "pun" });
+    lines.push(parts);
+  });
+  lines.push([{ t: "};", c: "pun" }]);
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 24 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true, margin: "-10%" }}
+      transition={{ duration: 0.6, ease: [0.22, 1, 0.36, 1] }}
+      className="overflow-hidden rounded-2xl border border-white/10 bg-[#0b0d16] shadow-[0_40px_120px_-60px_rgba(0,0,0,0.9)]"
+    >
+      {/* window chrome */}
+      <div className="flex items-center gap-2 border-b border-white/10 bg-white/[0.03] px-4 py-2.5">
+        <span className="h-3 w-3 rounded-full bg-[#ff5f57]" />
+        <span className="h-3 w-3 rounded-full bg-[#febc2e]" />
+        <span className="h-3 w-3 rounded-full bg-[#28c840]" />
+        <span className="font-mono-ui ml-3 rounded-md bg-white/5 px-2.5 py-0.5 text-[11px] text-white/60">
+          skills.js
+        </span>
+        <span className="label-mono ml-auto text-[9px] text-white/30">JavaScript</span>
+      </div>
+
+      {/* code body */}
+      <div className="font-mono-ui overflow-x-auto px-4 py-4 text-[13px] leading-7 sm:text-sm">
+        {lines.map((parts, i) => (
+          <div key={i} className="flex whitespace-pre">
+            <span className="mr-5 w-5 shrink-0 select-none text-right text-white/20">
+              {i + 1}
+            </span>
+            <code>
+              {parts.map((p, j) => (
+                <span key={j} className={C[p.c]}>
+                  {p.t}
+                </span>
+              ))}
+            </code>
+          </div>
+        ))}
+      </div>
+    </motion.div>
+  );
+}
+
 // ---------- main page ----------
 export default function PortfolioShrabya() {
   // Replace with your real info
@@ -1384,24 +1468,7 @@ export default function PortfolioShrabya() {
             desc="I focus on building reliable features with a clean architecture—and then add polished UI motion that makes everything feel premium."
           />
 
-          <div className="grid gap-4 md:grid-cols-2">
-            {skills.map((s, i) => (
-              <HoverCard key={s.title} delay={i * 0.08}>
-                <Card className="h-full border-white/10 bg-white/5 backdrop-blur transition-colors duration-300 group-hover/hc:border-indigo-400/30">
-                  <CardHeader>
-                    <CardTitle className="text-white">{s.title}</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="flex flex-wrap gap-2">
-                      {s.items.map((it) => (
-                        <TechPill key={it}>{it}</TechPill>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </HoverCard>
-            ))}
-          </div>
+          <CodeSkills skills={skills} />
 
           <div className="mt-6 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-4">
