@@ -159,15 +159,15 @@ body {
   color: transparent;
   filter: drop-shadow(0 0 6px rgba(255, 170, 60, 0.85))
     drop-shadow(0 0 14px rgba(255, 150, 40, 0.5));
-  -webkit-mask-image: linear-gradient(100deg, transparent 38%, #000 47%, #000 53%, transparent 62%);
-  mask-image: linear-gradient(100deg, transparent 38%, #000 47%, #000 53%, transparent 62%);
-  -webkit-mask-size: 240% 100%;
-  mask-size: 240% 100%;
-  animation: welcome-line-sweep 3.2s linear infinite;
+  -webkit-mask-image: linear-gradient(100deg, transparent 48.5%, #000 49.7%, #000 50.3%, transparent 51.5%);
+  mask-image: linear-gradient(100deg, transparent 48.5%, #000 49.7%, #000 50.3%, transparent 51.5%);
+  -webkit-mask-size: 200% 100%;
+  mask-size: 200% 100%;
+  animation: welcome-line-sweep 3.4s linear infinite;
 }
 @keyframes welcome-line-sweep {
-  from { -webkit-mask-position: 140% 0; mask-position: 140% 0; }
-  to { -webkit-mask-position: -40% 0; mask-position: -40% 0; }
+  from { -webkit-mask-position: 170% 0; mask-position: 170% 0; }
+  to { -webkit-mask-position: -70% 0; mask-position: -70% 0; }
 }
 @media (prefers-reduced-motion: reduce) {
   .welcome-line-glow { animation: none; }
