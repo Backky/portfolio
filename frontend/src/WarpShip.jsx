@@ -8,13 +8,14 @@ function Ship() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
 
-  // face straight down the warp axis (nose into the streaks), subtle motion
+  // model's nose runs along local X — turn it to point into the warp,
+  // held at a slight 3/4 so we see the body + engine, not a flat rear
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.y = Math.PI; // nose forward into the jump
-    ref.current.rotation.x = 0.08 + Math.sin(t * 3) * 0.02; // slight dive + engine shake
-    ref.current.rotation.z = Math.sin(t * 0.8) * 0.1; // gentle bank
+    ref.current.rotation.y = -Math.PI / 2 + 0.35 + Math.sin(t * 0.6) * 0.06;
+    ref.current.rotation.x = 0.12 + Math.sin(t * 3) * 0.02; // slight dive + shake
+    ref.current.rotation.z = Math.sin(t * 0.9) * 0.12; // gentle bank
     ref.current.position.y = Math.sin(t * 3) * 0.03; // engine vibration
   });
 
