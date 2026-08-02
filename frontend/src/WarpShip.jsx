@@ -8,14 +8,14 @@ function Ship() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
 
-  // gentle banking / bobbing only — Center+Bounds handle placement & zoom
+  // face straight down the warp axis (nose into the streaks), subtle motion
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.z = Math.sin(t * 1.3) * 0.2; // bank
-    ref.current.rotation.x = -0.05 + Math.sin(t * 1.7) * 0.05; // nose bob
-    ref.current.rotation.y = 0.6 + Math.sin(t * 0.5) * 0.12; // 3/4 view, sway
-    ref.current.position.y = Math.sin(t * 2.0) * 0.15;
+    ref.current.rotation.y = Math.PI; // nose forward into the jump
+    ref.current.rotation.x = 0.08 + Math.sin(t * 3) * 0.02; // slight dive + engine shake
+    ref.current.rotation.z = Math.sin(t * 0.8) * 0.1; // gentle bank
+    ref.current.position.y = Math.sin(t * 3) * 0.03; // engine vibration
   });
 
   return (
@@ -39,7 +39,7 @@ export default function WarpShip() {
       <pointLight position={[2, 2, 3]} intensity={12} color="#a855f7" />
       <Suspense fallback={null}>
         {/* auto-center the mesh and auto-zoom so the WHOLE ship fits the view */}
-        <Bounds fit clip observe margin={1.2}>
+        <Bounds fit clip margin={1.25}>
           <Center>
             <Ship />
           </Center>
