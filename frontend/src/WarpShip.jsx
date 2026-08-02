@@ -13,10 +13,12 @@ function Ship() {
   useFrame((state) => {
     if (!ref.current) return;
     const t = state.clock.elapsedTime;
-    ref.current.rotation.y = -Math.PI / 2 + 0.5 + Math.sin(t * 0.6) * 0.06; // 3/4 view
-    ref.current.rotation.x = 0.4 + Math.sin(t * 3) * 0.02; // tilt so we see it from above
-    ref.current.rotation.z = Math.sin(t * 0.9) * 0.12; // gentle bank
-    ref.current.position.y = Math.sin(t * 3) * 0.03; // engine vibration
+    // nose points away into the warp (rear 3/4), tilted so we see the top
+    ref.current.rotation.y = -Math.PI / 2 + 0.22 + Math.sin(t * 0.7) * 0.05;
+    ref.current.rotation.x = 0.34 + Math.sin(t * 3) * 0.02; // look down on the top
+    ref.current.rotation.z = Math.sin(t * 1.1) * 0.16; // banking — sells the flight
+    ref.current.position.y = Math.sin(t * 3) * 0.02; // engine vibration
+    ref.current.position.x = Math.sin(t * 0.8) * 0.08; // subtle drift
   });
 
   return (

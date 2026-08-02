@@ -1279,12 +1279,6 @@ export default function PortfolioShrabya() {
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <SpaceBackground />
-        {/* ambient 3D robot face behind the whole site */}
-        <div className="pointer-events-none absolute inset-0 opacity-[0.8]">
-          <Suspense fallback={null}>
-            <FaceBackground />
-          </Suspense>
-        </div>
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_12%_10%,rgba(255,255,255,0.10),transparent_55%),radial-gradient(1000px_circle_at_88%_18%,rgba(255,255,255,0.08),transparent_52%),radial-gradient(1000px_circle_at_45%_92%,rgba(255,255,255,0.06),transparent_52%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.06),transparent_35%,rgba(255,255,255,0.04))]" />
         <GlowBlob className="animate-drift left-[-120px] top-[-120px] h-[360px] w-[360px] bg-indigo-500" />
@@ -1298,6 +1292,12 @@ export default function PortfolioShrabya() {
           <div className="grid-floor absolute inset-0 origin-bottom [transform:rotateX(72deg)]" />
         </div>
         <GrainOverlay />
+        {/* ambient 3D robot face — rendered above the overlays so nothing dims it */}
+        <div className="pointer-events-none absolute inset-0 opacity-90">
+          <Suspense fallback={null}>
+            <FaceBackground />
+          </Suspense>
+        </div>
       </div>
 
       {/* Fixed left social rail (sample-style) */}
