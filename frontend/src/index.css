@@ -166,8 +166,10 @@ body {
     drop-shadow(0 0 11px rgba(255, 150, 40, 0.6));
   /* pathLength is normalized to 1000 on the element, so dash 80 = one short
      snake (~half a letter) and gap 920 leaves exactly one dash on the outline */
-  stroke-dasharray: 80 920;
-  animation: welcome-dash 6s linear infinite;
+  /* two short snakes (dash 80 + gap 420 = period 500, x2 across pathLength
+     1000) so the dark interval between them is halved */
+  stroke-dasharray: 80 420;
+  animation: welcome-dash 4.5s linear infinite;
 }
 @keyframes welcome-dash {
   to { stroke-dashoffset: -1000; }
