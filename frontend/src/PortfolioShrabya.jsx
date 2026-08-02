@@ -1041,7 +1041,7 @@ function IntroGate({ onEnter }) {
         transition={{ delay: 0.15, duration: 0.6 }}
         className="label-mono mb-7 text-[10px] text-white/40"
       >
-        Shrabya Paudel · Portfolio
+        You are about to enter the future
       </motion.p>
 
       <h1
@@ -1057,7 +1057,7 @@ function IntroGate({ onEnter }) {
         transition={{ delay: 0.55, duration: 0.6 }}
         className="mt-5 text-center text-sm text-white/50 sm:text-base"
       >
-        Crafting high-performance digital experiences
+        Experience is my priority
       </motion.p>
 
       <motion.button
