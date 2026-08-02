@@ -22,9 +22,9 @@ function Ship() {
 
     // heading: nose points along travel (up-right into the warp)
     ref.current.rotation.y = -Math.PI / 2 + 0.9;
-    // fighter-style bank: rolls hard on entry, levels through, rolls out
-    ref.current.rotation.z = -0.6 + p * 1.1 + Math.sin(p * Math.PI) * 0.25;
-    ref.current.rotation.x = 0.18 + Math.sin(p * Math.PI) * 0.12; // pitch through arc
+    // fighter-jet attitude: hard, steady bank into the climb + nose-up pitch
+    ref.current.rotation.z = 0.6 + Math.sin(performance.now() / 500) * 0.05;
+    ref.current.rotation.x = -0.14 + Math.sin(p * Math.PI) * 0.1; // climbing
   });
 
   return (

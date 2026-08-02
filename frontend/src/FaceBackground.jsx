@@ -49,14 +49,14 @@ export default function FaceBackground() {
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
     >
-      <ambientLight intensity={0.6} />
-      <directionalLight position={[5, 5, 5]} intensity={2.2} />
-      <directionalLight position={[-5, -2, -4]} intensity={1.2} color="#6366f1" />
-      <pointLight position={[0, 2, 4]} intensity={14} color="#22d3ee" />
-      <pointLight position={[3, -1, -2]} intensity={9} color="#d946ef" />
+      <ambientLight intensity={1.4} />
+      <directionalLight position={[5, 5, 5]} intensity={3.2} />
+      <directionalLight position={[-5, -2, -4]} intensity={1.8} color="#818cf8" />
+      <pointLight position={[0, 2, 5]} intensity={22} color="#22d3ee" />
+      <pointLight position={[3, -1, 2]} intensity={16} color="#d946ef" />
       <Suspense fallback={null}>
         <Face />
-        <Environment preset="night" />
+        <Environment preset="city" />
       </Suspense>
     </Canvas>
   );

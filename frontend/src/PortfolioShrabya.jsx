@@ -907,9 +907,9 @@ function WarpTransition({ onDone }) {
       cx = W / 2 + path.nx * W * 0.32;
       cy = H / 2 - path.ny * H * 0.32;
       if (audioGain) {
-        const fadeIn = Math.min(1, p / 0.1);
-        const fadeOut = Math.min(1, (1 - p) / 0.12);
-        audioGain.gain.value = fadeIn * fadeOut * (0.08 + path.near * 0.6);
+        // silent until the ship approaches; rises with proximity, falls as it leaves
+        const fadeOut = Math.min(1, (1 - p) / 0.15);
+        audioGain.gain.value = fadeOut * path.near * path.near * 0.75;
       }
 
       // accelerate hard, then ease at arrival
@@ -1238,6 +1238,11 @@ export default function PortfolioShrabya() {
       document.body.style.overflow = "";
     };
   }, [phase]);
+
+  // preload the ship chunk + model during the gate so it appears instantly
+  useEffect(() => {
+    if (phase === "gate") import("./WarpShip");
+  }, [phase]);
   const [active, setActive] = useState("about");
   const [menuOpen, setMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -1304,7 +1309,7 @@ export default function PortfolioShrabya() {
         </div>
         <GrainOverlay />
         {/* ambient 3D robot face — rendered above the overlays so nothing dims it */}
-        <div className="pointer-events-none absolute inset-0 opacity-90">
+        <div className="pointer-events-none absolute inset-0 opacity-100">
           <Suspense fallback={null}>
             <FaceBackground />
           </Suspense>
