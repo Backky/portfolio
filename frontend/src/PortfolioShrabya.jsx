@@ -804,6 +804,179 @@ function MaskWord({ children, delay = 0 }) {
   );
 }
 
+// Hyperspace warp between the ENTER gate and the main page: first-person
+// light-speed jump toward a galaxy, with a synthesized engine/whoosh sound.
+function WarpTransition({ onDone }) {
+  const canvasRef = useRef(null);
+
+  useEffect(() => {
+    const reduce =
+      window.matchMedia &&
+      window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    const DUR = reduce ? 250 : 3000;
+
+    // ---------- sound (Web Audio, no asset) ----------
+    let cleanupAudio = () => {};
+    if (!reduce) {
+      try {
+        const AC = window.AudioContext || window.webkitAudioContext;
+        const ac = new AC();
+        ac.resume && ac.resume();
+        const t0 = ac.currentTime;
+        const master = ac.createGain();
+        master.gain.setValueAtTime(0.0001, t0);
+        master.gain.exponentialRampToValueAtTime(0.5, t0 + 0.5);
+        master.gain.setValueAtTime(0.5, t0 + 2.1);
+        master.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.0);
+        master.connect(ac.destination);
+
+        // rising engine (sawtooth sweeping up)
+        const osc = ac.createOscillator();
+        osc.type = "sawtooth";
+        osc.frequency.setValueAtTime(45, t0);
+        osc.frequency.exponentialRampToValueAtTime(340, t0 + 2.3);
+        const oscGain = ac.createGain();
+        oscGain.gain.value = 0.12;
+        osc.connect(oscGain).connect(master);
+
+        // whoosh (band-passed white noise sweeping up)
+        const size = 2 * ac.sampleRate;
+        const buf = ac.createBuffer(1, size, ac.sampleRate);
+        const data = buf.getChannelData(0);
+        for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
+        const noise = ac.createBufferSource();
+        noise.buffer = buf;
+        noise.loop = true;
+        const bp = ac.createBiquadFilter();
+        bp.type = "bandpass";
+        bp.frequency.setValueAtTime(280, t0);
+        bp.frequency.exponentialRampToValueAtTime(4200, t0 + 2.0);
+        bp.Q.value = 0.7;
+        const noiseGain = ac.createGain();
+        noiseGain.gain.value = 0.2;
+        noise.connect(bp).connect(noiseGain).connect(master);
+
+        osc.start(t0);
+        noise.start(t0);
+        osc.stop(t0 + 3.1);
+        noise.stop(t0 + 3.1);
+        cleanupAudio = () => {
+          try {
+            osc.stop();
+            noise.stop();
+            ac.close();
+          } catch {}
+        };
+      } catch {}
+    }
+
+    // ---------- visuals ----------
+    const canvas = canvasRef.current;
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W, H, cx, cy, raf, start;
+    const resize = () => {
+      W = canvas.width = window.innerWidth * DPR;
+      H = canvas.height = window.innerHeight * DPR;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+      cx = W / 2;
+      cy = H / 2;
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const N = 520;
+    const mk = () => ({
+      x: (Math.random() - 0.5) * W,
+      y: (Math.random() - 0.5) * H,
+      z: Math.random() * W,
+    });
+    const stars = Array.from({ length: N }, mk);
+
+    const tick = (now) => {
+      if (!start) start = now;
+      const t = now - start;
+      const p = Math.min(t / DUR, 1);
+
+      // accelerate hard, then ease at arrival
+      const speed = (2 + p * p * 65) * DPR * 6;
+
+      ctx.fillStyle = "rgba(0,0,4,0.35)"; // motion-blur trails
+      ctx.fillRect(0, 0, W, H);
+
+      // galaxy we're flying toward (grows as we approach)
+      const gR = W * (0.05 + p * 0.55);
+      const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, gR);
+      g.addColorStop(0, `rgba(180,200,255,${0.05 + p * 0.15})`);
+      g.addColorStop(0.4, `rgba(120,90,220,${0.04 + p * 0.1})`);
+      g.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = g;
+      ctx.beginPath();
+      ctx.arc(cx, cy, gR, 0, Math.PI * 2);
+      ctx.fill();
+
+      const blue = Math.min(p * 1.6, 1);
+      for (const s of stars) {
+        const pz = s.z;
+        s.z -= speed;
+        if (s.z < 1) {
+          Object.assign(s, mk());
+          s.z = W;
+          continue;
+        }
+        const k = 140;
+        const sx = cx + (s.x / s.z) * k * DPR;
+        const sy = cy + (s.y / s.z) * k * DPR;
+        const px = cx + (s.x / pz) * k * DPR;
+        const py = cy + (s.y / pz) * k * DPR;
+        const w = Math.max(0.6, (1 - s.z / W) * 3.2) * DPR;
+        ctx.strokeStyle = `rgba(${Math.round(200 + blue * 55)},${Math.round(
+          215 + blue * 40
+        )},255,${0.5 + (1 - s.z / W) * 0.5})`;
+        ctx.lineWidth = w;
+        ctx.beginPath();
+        ctx.moveTo(px, py);
+        ctx.lineTo(sx, sy);
+        ctx.stroke();
+      }
+
+      // light-speed flash near the jump point
+      if (p > 0.78) {
+        const f = 1 - Math.abs((p - 0.86) / 0.14);
+        if (f > 0) {
+          ctx.fillStyle = `rgba(255,255,255,${Math.max(0, f)})`;
+          ctx.fillRect(0, 0, W, H);
+        }
+      }
+
+      if (t < DUR) raf = requestAnimationFrame(tick);
+      else onDone && onDone();
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      cleanupAudio();
+    };
+  }, [onDone]);
+
+  return (
+    <motion.div
+      key="warp"
+      initial={{ opacity: 1 }}
+      exit={{ opacity: 0 }}
+      transition={{ duration: 0.5 }}
+      className="fixed inset-0 z-[9998] bg-black"
+      aria-hidden="true"
+    >
+      <canvas ref={canvasRef} className="h-full w-full" />
+    </motion.div>
+  );
+}
+
 // Full-screen "ENTER" curtain; fades out and unmounts to reveal the hero
 function IntroGate({ onEnter }) {
   return (
@@ -1006,17 +1179,17 @@ export default function PortfolioShrabya() {
     []
   );
 
-  // UI state
-  const [intro, setIntro] = useState(true);
+  // UI state — intro sequence: "gate" -> "warp" -> "done"
+  const [phase, setPhase] = useState("gate");
   const [scrolled, setScrolled] = useState(false);
 
-  // lock scrolling while the intro curtain is up
+  // lock scrolling until the intro sequence finishes
   useEffect(() => {
-    document.body.style.overflow = intro ? "hidden" : "";
+    document.body.style.overflow = phase === "done" ? "" : "hidden";
     return () => {
       document.body.style.overflow = "";
     };
-  }, [intro]);
+  }, [phase]);
   const [active, setActive] = useState("about");
   const [menuOpen, setMenuOpen] = useState(false);
   const [contactOpen, setContactOpen] = useState(false);
@@ -1061,7 +1234,8 @@ export default function PortfolioShrabya() {
   return (
     <div className="min-h-screen overflow-x-clip bg-black text-white">
       <AnimatePresence>
-        {intro && <IntroGate onEnter={() => setIntro(false)} />}
+        {phase === "gate" && <IntroGate onEnter={() => setPhase("warp")} />}
+        {phase === "warp" && <WarpTransition onDone={() => setPhase("done")} />}
       </AnimatePresence>
       <ScrollProgress />
       <RippleLayer />
