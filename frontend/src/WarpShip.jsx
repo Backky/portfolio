@@ -1,15 +1,17 @@
 import { Suspense, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, Center, Resize } from "@react-three/drei";
 import { warpShipPath } from "./warpPath";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/spaceship.glb`;
 const DUR = 3000;
+const MARGIN = 2.6; // world units past the edge, so the ship is fully off-screen
 const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
 function Ship() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
+  const { viewport } = useThree();
   const start = useRef(performance.now());
 
   useFrame(() => {
@@ -17,8 +19,15 @@ function Ship() {
     const p = clamp01((performance.now() - start.current) / DUR);
     const { nx, ny, near } = warpShipPath(p);
 
-    // fly across the screen (raised up); z brings it near in the middle
-    ref.current.position.set(nx * 4.2, ny * 2.6 + 1.1, -3.2 + near * 4.6);
+    // map path to the real viewport (+margin) so it enters from fully below
+    // and exits fully above on any screen size; z brings it near in the middle
+    const halfW = viewport.width / 2;
+    const halfH = viewport.height / 2;
+    ref.current.position.set(
+      nx * (halfW + MARGIN),
+      ny * (halfH + MARGIN),
+      -1 + near * 2
+    );
 
     // heading: nose points along travel (up-right into the warp)
     ref.current.rotation.y = -Math.PI / 2 + 0.9;
