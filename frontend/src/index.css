@@ -148,32 +148,29 @@ body {
 /* WELCOME as SVG: a faint static outline + gold glowing dashes that chase
    around the actual letter outlines via animated stroke-dashoffset. */
 .welcome-svg {
-  width: min(88vw, 860px);
+  width: min(88vw, 820px);
   height: auto;
   overflow: visible;
-}
-.welcome-svg text {
-  font-family: "Sora", system-ui, sans-serif;
-  font-weight: 800;
-  font-size: 150px;
-  letter-spacing: 2px;
 }
 .welcome-svg-base {
   fill: none;
   stroke: rgba(255, 255, 255, 0.8);
-  stroke-width: 2;
+  stroke-width: 2.2;
 }
 .welcome-svg-glow {
   fill: none;
   stroke: #ffc45c;
-  stroke-width: 2.6;
+  stroke-width: 3;
+  stroke-linecap: round;
   filter: drop-shadow(0 0 4px rgba(255, 170, 60, 0.95))
-    drop-shadow(0 0 10px rgba(255, 150, 40, 0.6));
-  stroke-dasharray: 34 250;
-  animation: welcome-dash 2.6s linear infinite;
+    drop-shadow(0 0 11px rgba(255, 150, 40, 0.6));
+  /* pathLength is normalized to 1000 on the element, so dash 80 = one short
+     snake (~half a letter) and gap 920 leaves exactly one dash on the outline */
+  stroke-dasharray: 80 920;
+  animation: welcome-dash 3s linear infinite;
 }
 @keyframes welcome-dash {
-  to { stroke-dashoffset: -284; }
+  to { stroke-dashoffset: -1000; }
 }
 @media (prefers-reduced-motion: reduce) {
   .welcome-svg-glow { animation: none; }
