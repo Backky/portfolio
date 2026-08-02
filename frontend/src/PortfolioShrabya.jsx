@@ -1199,12 +1199,15 @@ function IntroGate({ onEnter }) {
         Step into the future
       </motion.p>
 
-      <h1
-        className="text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
-        style={{ WebkitTextStroke: "1.5px rgba(255,255,255,0.9)", color: "transparent" }}
+      <motion.h1
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
+        className="welcome-sweep text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
+        style={{ WebkitTextStroke: "1.5px rgba(255,255,255,0.9)" }}
       >
-        <MaskWord delay={0.2}>WELCOME</MaskWord>
-      </h1>
+        WELCOME
+      </motion.h1>
 
       <motion.p
         initial={{ opacity: 0, y: 14 }}
@@ -1232,8 +1235,8 @@ function IntroGate({ onEnter }) {
             animation: "rgb-spin 4s linear infinite",
           }}
         />
-        {/* glass interior */}
-        <span className="relative z-10 inline-flex items-center gap-2 rounded-full bg-black/70 px-8 py-3 text-sm font-semibold tracking-wide text-white backdrop-blur-md">
+        {/* opaque interior so the RGB shows only on the border ring */}
+        <span className="relative z-10 inline-flex items-center gap-2 rounded-full bg-[#050509] px-8 py-3 text-sm font-semibold tracking-wide text-white">
           ENTER
           <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
         </span>

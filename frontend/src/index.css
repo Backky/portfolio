@@ -145,6 +145,32 @@ body {
 .animate-marquee {
   animation: marquee 28s linear infinite;
 }
+/* warm "sun" highlight that sweeps across outlined text and loops */
+.welcome-sweep {
+  background: linear-gradient(
+    100deg,
+    transparent 0%,
+    transparent 38%,
+    rgba(255, 190, 80, 0.85) 46%,
+    #fff4cf 50%,
+    rgba(255, 190, 80, 0.85) 54%,
+    transparent 62%,
+    transparent 100%
+  );
+  background-size: 220% 100%;
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  animation: welcome-sweep 3.2s linear infinite;
+}
+@keyframes welcome-sweep {
+  from { background-position: 130% 50%; }
+  to { background-position: -30% 50%; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .welcome-sweep { animation: none; }
+}
+
 @keyframes rgb-spin {
   from { transform: translate(-50%, -50%) rotate(0deg); }
   to { transform: translate(-50%, -50%) rotate(360deg); }
