@@ -967,6 +967,12 @@ function WarpTransition({ onDone }) {
         }
       }
 
+      // ease in from black at the start so the warp doesn't pop on
+      if (p < 0.18) {
+        ctx.fillStyle = `rgba(0,0,0,${1 - p / 0.18})`;
+        ctx.fillRect(0, 0, W, H);
+      }
+
       // fade to solid black over the final stretch for a clean landing
       if (p > 0.82) {
         ctx.fillStyle = `rgba(0,0,0,${Math.min(1, (p - 0.82) / 0.16)})`;

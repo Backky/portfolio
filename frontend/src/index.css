@@ -146,7 +146,8 @@ body {
   animation: marquee 28s linear infinite;
 }
 @keyframes warp-ship-out {
-  0%, 80% { opacity: 1; }
+  0% { opacity: 0; }
+  12%, 80% { opacity: 1; }
   100% { opacity: 0; }
 }
 
