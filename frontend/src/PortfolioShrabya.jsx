@@ -14,7 +14,8 @@ import {
   Star,
   Trophy,
 } from "lucide-react";
-const HeroModel = lazy(() => import("./HeroModel"));
+const FaceBackground = lazy(() => import("./FaceBackground"));
+const WarpShip = lazy(() => import("./WarpShip"));
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
@@ -973,6 +974,12 @@ function WarpTransition({ onDone }) {
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="h-full w-full" />
+      {/* 3D spaceship flying through the warp, over the star streaks */}
+      <div className="pointer-events-none absolute inset-0">
+        <Suspense fallback={null}>
+          <WarpShip />
+        </Suspense>
+      </div>
     </motion.div>
   );
 }
@@ -1242,6 +1249,12 @@ export default function PortfolioShrabya() {
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <SpaceBackground />
+        {/* ambient 3D robot face behind the whole site */}
+        <div className="pointer-events-none absolute inset-0 opacity-[0.55]">
+          <Suspense fallback={null}>
+            <FaceBackground />
+          </Suspense>
+        </div>
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_12%_10%,rgba(255,255,255,0.10),transparent_55%),radial-gradient(1000px_circle_at_88%_18%,rgba(255,255,255,0.08),transparent_52%),radial-gradient(1000px_circle_at_45%_92%,rgba(255,255,255,0.06),transparent_52%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.06),transparent_35%,rgba(255,255,255,0.04))]" />
         <GlowBlob className="animate-drift left-[-120px] top-[-120px] h-[360px] w-[360px] bg-indigo-500" />
@@ -1500,7 +1513,7 @@ export default function PortfolioShrabya() {
         ) : null}
 
         <section className="relative pt-12 md:pt-16" ref={heroRef}>
-          <div className="grid items-center gap-10 md:grid-cols-2 md:gap-12">
+          <div className="max-w-3xl">
             <div>
               <motion.div
                 initial={{ opacity: 0, y: 18 }}
@@ -1611,24 +1624,6 @@ export default function PortfolioShrabya() {
                 <TechPill>Modern UI/animations</TechPill>
               </motion.div>
             </div>
-
-            {/* Hero visual — bare 3D model, no panel/background */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{ opacity: 1, scale: 1 }}
-              transition={{ duration: 0.8, ease: "easeOut" }}
-              className="relative h-[360px] sm:h-[460px]"
-            >
-              <Suspense
-                fallback={
-                  <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
-                    Loading 3D…
-                  </div>
-                }
-              >
-                <HeroModel />
-              </Suspense>
-            </motion.div>
           </div>
         </section>
 
