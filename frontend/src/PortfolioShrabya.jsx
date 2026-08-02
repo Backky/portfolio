@@ -1199,15 +1199,22 @@ function IntroGate({ onEnter }) {
         Step into the future
       </motion.p>
 
-      <motion.h1
+      <motion.div
         initial={{ opacity: 0, y: 20 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.2, duration: 0.7, ease: [0.22, 1, 0.36, 1] }}
-        className="welcome-sweep text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
-        style={{ WebkitTextStroke: "1.5px rgba(255,255,255,0.9)" }}
+        className="relative"
       >
-        WELCOME
-      </motion.h1>
+        <h1 className="welcome-line-base text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl">
+          WELCOME
+        </h1>
+        <h1
+          aria-hidden="true"
+          className="welcome-line-glow absolute inset-0 text-center text-5xl font-extrabold leading-[0.95] tracking-tight sm:text-7xl md:text-8xl"
+        >
+          WELCOME
+        </h1>
+      </motion.div>
 
       <motion.p
         initial={{ opacity: 0, y: 14 }}
