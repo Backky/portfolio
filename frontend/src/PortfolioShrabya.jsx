@@ -385,9 +385,16 @@ function NeuralBackground() {
           n.vx += (dx / d) * 0.02 * DPR;
           n.vy += (dy / d) * 0.02 * DPR;
         }
-        n.vx *= 0.98;
-        n.vy *= 0.98;
-        const sp = Math.hypot(n.vx, n.vy);
+        // very light damping so cursor pulls settle, but keep drifting forever
+        n.vx *= 0.996;
+        n.vy *= 0.996;
+        let sp = Math.hypot(n.vx, n.vy);
+        // maintain a gentle autonomous drift so they never stop moving
+        if (sp < 0.14 * DPR) {
+          n.vx += (Math.random() - 0.5) * 0.12 * DPR;
+          n.vy += (Math.random() - 0.5) * 0.12 * DPR;
+          sp = Math.hypot(n.vx, n.vy);
+        }
         if (sp > MAXV) {
           n.vx = (n.vx / sp) * MAXV;
           n.vy = (n.vy / sp) * MAXV;
@@ -1213,21 +1220,25 @@ function IntroGate({ onEnter }) {
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.8, duration: 0.6 }}
         onClick={onEnter}
-        className="group mt-10 inline-flex items-center gap-2 rounded-full border border-white/20 bg-gradient-to-r from-indigo-500/80 to-fuchsia-500/80 px-8 py-3 text-sm font-semibold text-white shadow-[0_12px_40px_-12px_rgba(168,85,247,0.7)] transition-all duration-300 hover:scale-105 hover:from-indigo-500 hover:to-fuchsia-500"
+        className="group relative mt-10 inline-flex items-center justify-center overflow-hidden rounded-full p-[1.5px] transition-transform duration-300 hover:scale-105"
       >
-        ENTER
-        <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        {/* rotating RGB conic gradient forms the animated border */}
+        <span
+          aria-hidden="true"
+          className="absolute left-1/2 top-1/2 h-[320%] w-[320%]"
+          style={{
+            background:
+              "conic-gradient(from 0deg, #ff004c, #ff8a00, #ffe600, #00ff9d, #00c3ff, #7a5cff, #ff00c8, #ff004c)",
+            animation: "rgb-spin 4s linear infinite",
+          }}
+        />
+        {/* glass interior */}
+        <span className="relative z-10 inline-flex items-center gap-2 rounded-full bg-black/70 px-8 py-3 text-sm font-semibold tracking-wide text-white backdrop-blur-md">
+          ENTER
+          <ArrowRight className="h-4 w-4 transition-transform duration-300 group-hover:translate-x-1" />
+        </span>
       </motion.button>
 
-      <motion.div
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ delay: 1.1 }}
-        className="pointer-events-none absolute inset-0 -z-10"
-      >
-        <div className="animate-drift absolute left-[15%] top-[20%] h-64 w-64 rounded-full bg-indigo-600/20 blur-3xl" />
-        <div className="animate-float-y-slow absolute bottom-[18%] right-[18%] h-72 w-72 rounded-full bg-fuchsia-600/20 blur-3xl" />
-      </motion.div>
     </motion.div>
   );
 }
