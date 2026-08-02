@@ -1178,6 +1178,11 @@ function IntroGate({ onEnter }) {
       transition={{ duration: 0.65, ease: [0.65, 0, 0.35, 1] }}
       className="fixed inset-0 z-[9999] flex flex-col items-center justify-center bg-black px-6"
     >
+      {/* interactive neural constellation behind the gate content */}
+      <div className="absolute inset-0 -z-10">
+        <NeuralBackground />
+      </div>
+
       <motion.p
         initial={{ opacity: 0, y: 14 }}
         animate={{ opacity: 1, y: 0 }}
