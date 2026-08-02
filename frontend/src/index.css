@@ -145,6 +145,11 @@ body {
 .animate-marquee {
   animation: marquee 28s linear infinite;
 }
+@keyframes warp-ship-out {
+  0%, 80% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
 @keyframes ripple-wave {
   0% {
     transform: translate(-50%, -50%) scale(0.12);

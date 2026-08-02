@@ -876,7 +876,7 @@ function WarpTransition({ onDone }) {
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
     const DPR = Math.min(window.devicePixelRatio || 1, 2);
-    let W, H, cx, cy, raf, start;
+    let W, H, cx, cy, raf, start, maxR;
     const resize = () => {
       W = canvas.width = window.innerWidth * DPR;
       H = canvas.height = window.innerHeight * DPR;
@@ -884,17 +884,17 @@ function WarpTransition({ onDone }) {
       canvas.style.height = window.innerHeight + "px";
       cx = W / 2;
       cy = H / 2;
+      maxR = Math.hypot(W, H) * 0.62;
     };
     resize();
     window.addEventListener("resize", resize);
 
-    const N = 340;
-    const mk = () => ({
-      x: (Math.random() - 0.5) * W,
-      y: (Math.random() - 0.5) * H,
-      z: Math.random() * W,
+    const N = 440;
+    const mk = (spread = 1) => ({
+      ang: Math.random() * Math.PI * 2,
+      r: Math.random() * maxR * spread,
     });
-    const stars = Array.from({ length: N }, mk);
+    const stars = Array.from({ length: N }, () => mk());
 
     const tick = (now) => {
       if (!start) start = now;
@@ -905,65 +905,72 @@ function WarpTransition({ onDone }) {
       const speed = (2 + p * p * 65) * DPR * 6;
 
       // deep-space motion-blur trails (dark, so streaks never wash to white)
-      ctx.fillStyle = "rgba(3,4,14,0.30)";
+      ctx.fillStyle = "rgba(3,4,14,0.28)";
       ctx.fillRect(0, 0, W, H);
 
       // refined violet destination glow (subtle, grows as we approach)
-      const gR = W * (0.06 + p * 0.5);
+      const gR = W * (0.06 + p * 0.45);
       const g = ctx.createRadialGradient(cx, cy, 0, cx, cy, gR);
-      g.addColorStop(0, `rgba(150,120,255,${0.06 + p * 0.12})`);
-      g.addColorStop(0.4, `rgba(90,70,190,${0.04 + p * 0.07})`);
+      g.addColorStop(0, `rgba(150,120,255,${0.05 + p * 0.1})`);
+      g.addColorStop(0.4, `rgba(90,70,190,${0.03 + p * 0.06})`);
       g.addColorStop(1, "rgba(0,0,0,0)");
       ctx.fillStyle = g;
       ctx.beginPath();
       ctx.arc(cx, cy, gR, 0, Math.PI * 2);
       ctx.fill();
 
-      // color-graded streaks: deep indigo far -> soft cyan near, capped bright
+      // perfectly radial hyperspace streaks accelerating outward from centre
+      const spd = (0.008 + p * p * 0.05); // fraction of radius per frame
       for (const s of stars) {
-        const pz = s.z;
-        s.z -= speed;
-        if (s.z < 1) {
-          Object.assign(s, mk());
-          s.z = W;
+        const pr = s.r;
+        s.r += pr * spd + (1.5 + p * 6) * DPR;
+        if (s.r > maxR) {
+          Object.assign(s, mk(0.06)); // respawn near the centre
           continue;
         }
-        const k = 140;
-        const sx = cx + (s.x / s.z) * k * DPR;
-        const sy = cy + (s.y / s.z) * k * DPR;
-        const px = cx + (s.x / pz) * k * DPR;
-        const py = cy + (s.y / pz) * k * DPR;
-        const near = 1 - s.z / W; // 0 far, 1 near
-        const w = Math.max(0.5, near * 2.3) * DPR;
-        const r = Math.round(90 + near * 115);
-        const gg = Math.round(120 + near * 110);
-        ctx.strokeStyle = `rgba(${r},${gg},255,${0.1 + near * 0.5})`;
-        ctx.lineWidth = w;
+        const near = s.r / maxR; // 0 centre, 1 edge
+        const cos = Math.cos(s.ang);
+        const sin = Math.sin(s.ang);
+        const x1 = cx + cos * pr;
+        const y1 = cy + sin * pr;
+        const x2 = cx + cos * s.r;
+        const y2 = cy + sin * s.r;
+        const rr = Math.round(120 + near * 100);
+        const gg = Math.round(150 + near * 90);
+        ctx.strokeStyle = `rgba(${rr},${gg},255,${0.15 + near * 0.55})`;
+        ctx.lineWidth = Math.max(0.5, near * 2.2) * DPR;
+        ctx.lineCap = "round";
         ctx.beginPath();
-        ctx.moveTo(px, py);
-        ctx.lineTo(sx, sy);
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
         ctx.stroke();
       }
 
       // calm dark vignette in the centre so the ship reads cleanly
       const vig = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.55);
-      vig.addColorStop(0, "rgba(3,4,14,0.55)");
-      vig.addColorStop(0.3, "rgba(3,4,14,0.18)");
+      vig.addColorStop(0, "rgba(3,4,14,0.5)");
+      vig.addColorStop(0.32, "rgba(3,4,14,0.15)");
       vig.addColorStop(0.62, "rgba(3,4,14,0)");
       ctx.fillStyle = vig;
       ctx.fillRect(0, 0, W, H);
 
       // soft light-speed bloom near the jump (radial, not a hard white flash)
-      if (p > 0.8) {
-        const f = 1 - Math.abs((p - 0.88) / 0.12);
+      if (p > 0.72 && p < 0.9) {
+        const f = 1 - Math.abs((p - 0.81) / 0.09);
         if (f > 0) {
-          const fl = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.75);
-          fl.addColorStop(0, `rgba(225,235,255,${0.8 * f})`);
-          fl.addColorStop(0.5, `rgba(150,170,255,${0.28 * f})`);
+          const fl = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.max(W, H) * 0.7);
+          fl.addColorStop(0, `rgba(225,235,255,${0.7 * f})`);
+          fl.addColorStop(0.5, `rgba(150,170,255,${0.25 * f})`);
           fl.addColorStop(1, "rgba(0,0,0,0)");
           ctx.fillStyle = fl;
           ctx.fillRect(0, 0, W, H);
         }
+      }
+
+      // fade to solid black over the final stretch for a clean landing
+      if (p > 0.82) {
+        ctx.fillStyle = `rgba(0,0,0,${Math.min(1, (p - 0.82) / 0.16)})`;
+        ctx.fillRect(0, 0, W, H);
       }
 
       if (t < DUR) raf = requestAnimationFrame(tick);
@@ -989,7 +996,10 @@ function WarpTransition({ onDone }) {
     >
       <canvas ref={canvasRef} className="h-full w-full" />
       {/* 3D spaceship flying through the warp, over the star streaks */}
-      <div className="pointer-events-none absolute inset-0">
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{ animation: "warp-ship-out 3000ms linear forwards" }}
+      >
         <Suspense fallback={null}>
           <WarpShip />
         </Suspense>
