@@ -14,6 +14,7 @@ import {
   Star,
   Trophy,
 } from "lucide-react";
+import { warpShipPath } from "./warpPath";
 const FaceBackground = lazy(() => import("./FaceBackground"));
 const WarpShip = lazy(() => import("./WarpShip"));
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
@@ -819,6 +820,7 @@ function WarpTransition({ onDone }) {
 
     // ---------- sound (Web Audio, no asset) ----------
     let cleanupAudio = () => {};
+    let audioGain = null; // updated per-frame by the ship's distance
     if (!reduce) {
       try {
         const AC = window.AudioContext || window.webkitAudioContext;
@@ -826,11 +828,9 @@ function WarpTransition({ onDone }) {
         ac.resume && ac.resume();
         const t0 = ac.currentTime;
         const master = ac.createGain();
-        master.gain.setValueAtTime(0.0001, t0);
-        master.gain.exponentialRampToValueAtTime(0.5, t0 + 0.5);
-        master.gain.setValueAtTime(0.5, t0 + 2.1);
-        master.gain.exponentialRampToValueAtTime(0.0001, t0 + 3.0);
+        master.gain.value = 0.0001; // driven manually in the tick loop
         master.connect(ac.destination);
+        audioGain = master;
 
         // rising engine (sawtooth sweeping up)
         const osc = ac.createOscillator();
@@ -900,6 +900,17 @@ function WarpTransition({ onDone }) {
       if (!start) start = now;
       const t = now - start;
       const p = Math.min(t / DUR, 1);
+
+      // follow the ship: the warp centre tracks its screen position, and the
+      // engine sound rises/falls with how near the ship is
+      const path = warpShipPath(p);
+      cx = W / 2 + path.nx * W * 0.32;
+      cy = H / 2 - path.ny * H * 0.32;
+      if (audioGain) {
+        const fadeIn = Math.min(1, p / 0.1);
+        const fadeOut = Math.min(1, (1 - p) / 0.12);
+        audioGain.gain.value = fadeIn * fadeOut * (0.08 + path.near * 0.6);
+      }
 
       // accelerate hard, then ease at arrival
       const speed = (2 + p * p * 65) * DPR * 6;

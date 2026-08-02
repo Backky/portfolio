@@ -1,6 +1,6 @@
 import { Suspense, useEffect, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Center, Bounds } from "@react-three/drei";
+import { useGLTF, Environment, Center, Resize } from "@react-three/drei";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/robotface.glb`;
 
@@ -27,9 +27,17 @@ function Face() {
     ref.current.rotation.x += (tx - ref.current.rotation.x) * 0.04;
   });
 
+  // Resize normalizes the tiny model to 1 unit; the group scales it up to a
+  // known, guaranteed-visible size and Center puts it at the origin.
   return (
     <group ref={ref}>
-      <primitive object={scene} />
+      <Center>
+        <group scale={3.6}>
+          <Resize>
+            <primitive object={scene} />
+          </Resize>
+        </group>
+      </Center>
     </group>
   );
 }
@@ -47,12 +55,7 @@ export default function FaceBackground() {
       <pointLight position={[0, 2, 4]} intensity={14} color="#22d3ee" />
       <pointLight position={[3, -1, -2]} intensity={9} color="#d946ef" />
       <Suspense fallback={null}>
-        {/* auto-center & auto-fit so the face is always framed on screen */}
-        <Bounds fit clip margin={1.4}>
-          <Center>
-            <Face />
-          </Center>
-        </Bounds>
+        <Face />
         <Environment preset="night" />
       </Suspense>
     </Canvas>

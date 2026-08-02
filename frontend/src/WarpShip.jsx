@@ -1,29 +1,39 @@
 import { Suspense, useRef } from "react";
 import { Canvas, useFrame } from "@react-three/fiber";
-import { useGLTF, Environment, Center, Bounds } from "@react-three/drei";
+import { useGLTF, Environment, Center, Resize } from "@react-three/drei";
+import { warpShipPath } from "./warpPath";
 
 const MODEL_URL = `${import.meta.env.BASE_URL}models/spaceship.glb`;
+const DUR = 3000;
+const clamp01 = (v) => Math.min(1, Math.max(0, v));
 
 function Ship() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
+  const start = useRef(performance.now());
 
-  // model's nose runs along local X — turn it to point into the warp,
-  // held at a slight 3/4 so we see the body + engine, not a flat rear
-  useFrame((state) => {
+  useFrame(() => {
     if (!ref.current) return;
-    const t = state.clock.elapsedTime;
-    // nose points away into the warp (rear 3/4), tilted so we see the top
-    ref.current.rotation.y = -Math.PI / 2 + 0.22 + Math.sin(t * 0.7) * 0.05;
-    ref.current.rotation.x = 0.34 + Math.sin(t * 3) * 0.02; // look down on the top
-    ref.current.rotation.z = Math.sin(t * 1.1) * 0.16; // banking — sells the flight
-    ref.current.position.y = Math.sin(t * 3) * 0.02; // engine vibration
-    ref.current.position.x = Math.sin(t * 0.8) * 0.08; // subtle drift
+    const p = clamp01((performance.now() - start.current) / DUR);
+    const { nx, ny, near } = warpShipPath(p);
+
+    // fly across the screen; z brings it near in the middle, far at the ends
+    ref.current.position.set(nx * 4.2, ny * 2.6, -3.2 + near * 4.6);
+
+    // heading: nose points along travel (up-right into the warp)
+    ref.current.rotation.y = -Math.PI / 2 + 0.9;
+    // fighter-style bank: rolls hard on entry, levels through, rolls out
+    ref.current.rotation.z = -0.6 + p * 1.1 + Math.sin(p * Math.PI) * 0.25;
+    ref.current.rotation.x = 0.18 + Math.sin(p * Math.PI) * 0.12; // pitch through arc
   });
 
   return (
-    <group ref={ref}>
-      <primitive object={scene} />
+    <group ref={ref} scale={2.4}>
+      <Center>
+        <Resize>
+          <primitive object={scene} />
+        </Resize>
+      </Center>
     </group>
   );
 }
@@ -31,7 +41,7 @@ function Ship() {
 export default function WarpShip() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 8], fov: 45 }}
+      camera={{ position: [0, 0, 7], fov: 48 }}
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
     >
@@ -41,12 +51,7 @@ export default function WarpShip() {
       <pointLight position={[0, -1.5, -4]} intensity={40} color="#22d3ee" />
       <pointLight position={[2, 2, 3]} intensity={12} color="#a855f7" />
       <Suspense fallback={null}>
-        {/* auto-center the mesh and auto-zoom so the WHOLE ship fits the view */}
-        <Bounds fit clip margin={1.25}>
-          <Center>
-            <Ship />
-          </Center>
-        </Bounds>
+        <Ship />
         <Environment preset="night" />
       </Suspense>
     </Canvas>
