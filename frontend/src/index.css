@@ -167,7 +167,7 @@ body {
   /* pathLength is normalized to 1000 on the element, so dash 80 = one short
      snake (~half a letter) and gap 920 leaves exactly one dash on the outline */
   stroke-dasharray: 80 920;
-  animation: welcome-dash 3s linear infinite;
+  animation: welcome-dash 6s linear infinite;
 }
 @keyframes welcome-dash {
   to { stroke-dashoffset: -1000; }
