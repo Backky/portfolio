@@ -331,6 +331,149 @@ function RippleLayer() {
   );
 }
 
+// Interactive neural constellation: drifting nodes linked by lines; nodes
+// near the cursor connect to it and are gently pulled toward it.
+function NeuralBackground() {
+  const ref = useRef();
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W, H, raf;
+    const resize = () => {
+      W = canvas.width = window.innerWidth * DPR;
+      H = canvas.height = window.innerHeight * DPR;
+      canvas.style.width = window.innerWidth + "px";
+      canvas.style.height = window.innerHeight + "px";
+    };
+    resize();
+    window.addEventListener("resize", resize);
+
+    const count = Math.min(95, Math.floor((window.innerWidth * window.innerHeight) / 16000));
+    const nodes = Array.from({ length: count }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.28 * DPR,
+      vy: (Math.random() - 0.5) * 0.28 * DPR,
+    }));
+
+    const mouse = { x: -9999, y: -9999 };
+    const onMove = (e) => {
+      mouse.x = e.clientX * DPR;
+      mouse.y = e.clientY * DPR;
+    };
+    const onLeave = () => {
+      mouse.x = -9999;
+      mouse.y = -9999;
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+    window.addEventListener("mouseout", onLeave);
+
+    const LINK = 130 * DPR;
+    const MOUSE_R = 190 * DPR;
+    const MAXV = 1.3 * DPR;
+
+    const tick = () => {
+      ctx.clearRect(0, 0, W, H);
+
+      // move nodes (gentle pull toward cursor when near)
+      for (const n of nodes) {
+        const dx = mouse.x - n.x;
+        const dy = mouse.y - n.y;
+        const d = Math.hypot(dx, dy);
+        if (d < MOUSE_R && d > 1) {
+          n.vx += (dx / d) * 0.02 * DPR;
+          n.vy += (dy / d) * 0.02 * DPR;
+        }
+        n.vx *= 0.98;
+        n.vy *= 0.98;
+        const sp = Math.hypot(n.vx, n.vy);
+        if (sp > MAXV) {
+          n.vx = (n.vx / sp) * MAXV;
+          n.vy = (n.vy / sp) * MAXV;
+        }
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > W) n.vx *= -1;
+        if (n.y < 0 || n.y > H) n.vy *= -1;
+        n.x = Math.max(0, Math.min(W, n.x));
+        n.y = Math.max(0, Math.min(H, n.y));
+      }
+
+      // node-to-node links
+      ctx.lineWidth = DPR * 0.6;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < LINK * LINK) {
+            const al = (1 - Math.sqrt(d2) / LINK) * 0.32;
+            ctx.strokeStyle = `rgba(150,170,255,${al})`;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // links from cursor to nearby nodes
+      if (mouse.x > 0) {
+        ctx.lineWidth = DPR * 0.9;
+        for (const n of nodes) {
+          const dx = mouse.x - n.x;
+          const dy = mouse.y - n.y;
+          const d = Math.hypot(dx, dy);
+          if (d < MOUSE_R) {
+            const al = (1 - d / MOUSE_R) * 0.6;
+            ctx.strokeStyle = `rgba(217,160,255,${al})`;
+            ctx.beginPath();
+            ctx.moveTo(mouse.x, mouse.y);
+            ctx.lineTo(n.x, n.y);
+            ctx.stroke();
+          }
+        }
+      }
+
+      // nodes
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(200,210,255,0.65)";
+        ctx.arc(n.x, n.y, 1.6 * DPR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      // cursor node
+      if (mouse.x > 0) {
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(217,160,255,0.9)";
+        ctx.arc(mouse.x, mouse.y, 2.6 * DPR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      window.removeEventListener("resize", resize);
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("mouseout", onLeave);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    />
+  );
+}
+
 // Persistent deep-space background: twinkling stars + occasional shooting stars
 function SpaceBackground() {
   const ref = useRef(null);
@@ -1041,7 +1184,7 @@ function IntroGate({ onEnter }) {
         transition={{ delay: 0.15, duration: 0.6 }}
         className="label-mono mb-7 text-[10px] text-white/40"
       >
-        You are about to enter the future
+        Step into the future
       </motion.p>
 
       <h1
@@ -1295,6 +1438,7 @@ export default function PortfolioShrabya() {
       {/* Background */}
       <div className="fixed inset-0 -z-10">
         <SpaceBackground />
+        <NeuralBackground />
         <div className="absolute inset-0 bg-[radial-gradient(1200px_circle_at_12%_10%,rgba(255,255,255,0.10),transparent_55%),radial-gradient(1000px_circle_at_88%_18%,rgba(255,255,255,0.08),transparent_52%),radial-gradient(1000px_circle_at_45%_92%,rgba(255,255,255,0.06),transparent_52%)]" />
         <div className="absolute inset-0 bg-[linear-gradient(to_bottom,rgba(255,255,255,0.06),transparent_35%,rgba(255,255,255,0.04))]" />
         <GlowBlob className="animate-drift left-[-120px] top-[-120px] h-[360px] w-[360px] bg-indigo-500" />
