@@ -485,6 +485,115 @@ function NeuralBackground() {
   );
 }
 
+// Neural constellation sized to its PARENT container (e.g. behind the robot)
+function NeuralPanel() {
+  const ref = useRef();
+  useEffect(() => {
+    const canvas = ref.current;
+    const ctx = canvas.getContext("2d");
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    let W, H, raf;
+    const resize = () => {
+      W = canvas.width = canvas.clientWidth * DPR;
+      H = canvas.height = canvas.clientHeight * DPR;
+    };
+    resize();
+    const ro = new ResizeObserver(resize);
+    ro.observe(canvas);
+
+    const count = Math.max(24, Math.min(46, Math.floor((canvas.clientWidth * canvas.clientHeight) / 6500)));
+    let nodes = Array.from({ length: count }, () => ({
+      x: Math.random() * W,
+      y: Math.random() * H,
+      vx: (Math.random() - 0.5) * 0.3 * DPR,
+      vy: (Math.random() - 0.5) * 0.3 * DPR,
+    }));
+
+    const mouse = { x: -9999, y: -9999 };
+    const onMove = (e) => {
+      const r = canvas.getBoundingClientRect();
+      mouse.x = (e.clientX - r.left) * DPR;
+      mouse.y = (e.clientY - r.top) * DPR;
+    };
+    window.addEventListener("mousemove", onMove, { passive: true });
+
+    const LINK = 95 * DPR;
+    const MOUSE_R = 150 * DPR;
+    const MAXV = 1.2 * DPR;
+
+    const tick = () => {
+      ctx.clearRect(0, 0, W, H);
+      for (const n of nodes) {
+        const dx = mouse.x - n.x;
+        const dy = mouse.y - n.y;
+        const d = Math.hypot(dx, dy);
+        if (d < MOUSE_R && d > 1) {
+          n.vx += (dx / d) * 0.02 * DPR;
+          n.vy += (dy / d) * 0.02 * DPR;
+        }
+        n.vx *= 0.996;
+        n.vy *= 0.996;
+        let sp = Math.hypot(n.vx, n.vy);
+        if (sp < 0.14 * DPR) {
+          n.vx += (Math.random() - 0.5) * 0.12 * DPR;
+          n.vy += (Math.random() - 0.5) * 0.12 * DPR;
+          sp = Math.hypot(n.vx, n.vy);
+        }
+        if (sp > MAXV) {
+          n.vx = (n.vx / sp) * MAXV;
+          n.vy = (n.vy / sp) * MAXV;
+        }
+        n.x += n.vx;
+        n.y += n.vy;
+        if (n.x < 0 || n.x > W) n.vx *= -1;
+        if (n.y < 0 || n.y > H) n.vy *= -1;
+        n.x = Math.max(0, Math.min(W, n.x));
+        n.y = Math.max(0, Math.min(H, n.y));
+      }
+      ctx.lineWidth = DPR * 0.6;
+      for (let i = 0; i < nodes.length; i++) {
+        for (let j = i + 1; j < nodes.length; j++) {
+          const a = nodes[i];
+          const b = nodes[j];
+          const dx = a.x - b.x;
+          const dy = a.y - b.y;
+          const d2 = dx * dx + dy * dy;
+          if (d2 < LINK * LINK) {
+            const al = (1 - Math.sqrt(d2) / LINK) * 0.32;
+            ctx.strokeStyle = `rgba(150,170,255,${al})`;
+            ctx.beginPath();
+            ctx.moveTo(a.x, a.y);
+            ctx.lineTo(b.x, b.y);
+            ctx.stroke();
+          }
+        }
+      }
+      for (const n of nodes) {
+        ctx.beginPath();
+        ctx.fillStyle = "rgba(200,210,255,0.6)";
+        ctx.arc(n.x, n.y, 1.5 * DPR, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+
+    return () => {
+      cancelAnimationFrame(raf);
+      ro.disconnect();
+      window.removeEventListener("mousemove", onMove);
+    };
+  }, []);
+
+  return (
+    <canvas
+      ref={ref}
+      aria-hidden="true"
+      className="pointer-events-none absolute inset-0 h-full w-full"
+    />
+  );
+}
+
 // Persistent deep-space background: twinkling stars + occasional shooting stars
 function SpaceBackground() {
   const ref = useRef(null);
@@ -1463,6 +1572,10 @@ export default function PortfolioShrabya() {
             voices.find((x) => /david|male|google uk english male/i.test(x.name)) ||
             voices[0];
           if (v) u.voice = v;
+          // drive the robot's talking motion from the speech events
+          u.onstart = () => window.dispatchEvent(new Event("robot-talk-start"));
+          u.onend = () => window.dispatchEvent(new Event("robot-talk-end"));
+          u.onboundary = () => window.dispatchEvent(new Event("robot-talk-boundary"));
           synth.cancel();
           synth.speak(u);
         }
@@ -1893,17 +2006,20 @@ export default function PortfolioShrabya() {
               </motion.div>
             </div>
 
-            {/* 3D robot face (foreground, visible) */}
+            {/* 3D robot face with a neural constellation behind the head */}
             <div className="relative h-[360px] sm:h-[460px]">
-              <Suspense
-                fallback={
-                  <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
-                    Loading 3D…
-                  </div>
-                }
-              >
-                <FaceBackground />
-              </Suspense>
+              <NeuralPanel />
+              <div className="relative z-10 h-full">
+                <Suspense
+                  fallback={
+                    <div className="label-mono absolute inset-0 flex items-center justify-center text-[10px] text-white/50">
+                      Loading 3D…
+                    </div>
+                  }
+                >
+                  <FaceBackground />
+                </Suspense>
+              </div>
             </div>
           </div>
         </section>

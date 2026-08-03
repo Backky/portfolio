@@ -8,23 +8,46 @@ function Face() {
   const ref = useRef();
   const { scene } = useGLTF(MODEL_URL);
   const mouse = useRef({ x: 0, y: 0 });
+  const talk = useRef({ on: false, pulse: 0 });
 
   useEffect(() => {
     const onMove = (e) => {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
     };
+    const start = () => (talk.current.on = true);
+    const end = () => (talk.current.on = false);
+    const bound = () => (talk.current.pulse = 1); // spike on each word
     window.addEventListener("mousemove", onMove);
-    return () => window.removeEventListener("mousemove", onMove);
+    window.addEventListener("robot-talk-start", start);
+    window.addEventListener("robot-talk-end", end);
+    window.addEventListener("robot-talk-boundary", bound);
+    return () => {
+      window.removeEventListener("mousemove", onMove);
+      window.removeEventListener("robot-talk-start", start);
+      window.removeEventListener("robot-talk-end", end);
+      window.removeEventListener("robot-talk-boundary", bound);
+    };
   }, []);
 
-  // slow idle + gentle cursor follow
+  // slow idle + gentle cursor follow + talking head-motion
   useFrame((state) => {
     if (!ref.current) return;
     const ty = mouse.current.x * 0.4 + Math.sin(state.clock.elapsedTime * 0.3) * 0.05;
     const tx = mouse.current.y * 0.22;
     ref.current.rotation.y += (ty - ref.current.rotation.y) * 0.04;
     ref.current.rotation.x += (tx - ref.current.rotation.x) * 0.04;
+
+    // "talking": rapid subtle nod while speaking + a bob spike on each word
+    const t = talk.current;
+    t.pulse *= 0.82;
+    if (t.on || t.pulse > 0.01) {
+      const chatter = Math.sin(state.clock.elapsedTime * 26) * 0.05 * (t.on ? 1 : 0);
+      ref.current.rotation.x += chatter + t.pulse * 0.09;
+      ref.current.scale.setScalar(1 + t.pulse * 0.02);
+    } else {
+      ref.current.scale.setScalar(1);
+    }
   });
 
   // Resize normalizes the tiny model to 1 unit; the group scales it up to a
