@@ -1258,6 +1258,36 @@ function IntroGate({ onEnter }) {
   );
 }
 
+// Robot greeting: a typed speech bubble by the face
+function RobotSpeech() {
+  const full = "Hi, I'm Shrabya Paudel. Welcome to my world.";
+  const [n, setN] = useState(0);
+  useEffect(() => {
+    let i = 0;
+    const id = setInterval(() => {
+      i += 1;
+      setN(i);
+      if (i >= full.length) clearInterval(id);
+    }, 45);
+    return () => clearInterval(id);
+  }, []);
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 12, scale: 0.9 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      exit={{ opacity: 0, scale: 0.9 }}
+      transition={{ type: "spring", stiffness: 260, damping: 20 }}
+      className="pointer-events-none absolute left-1/2 top-2 z-20 w-max max-w-[80%] -translate-x-1/2"
+    >
+      <div className="relative rounded-2xl rounded-bl-sm border border-white/15 bg-white/95 px-4 py-2 text-sm font-medium text-black shadow-[0_20px_50px_-20px_rgba(0,0,0,0.8)]">
+        {full.slice(0, n)}
+        <span className="ml-0.5 inline-block w-1.5 animate-pulse">▍</span>
+        <span className="absolute -bottom-1.5 left-5 h-3 w-3 rotate-45 border-b border-r border-white/15 bg-white/95" />
+      </div>
+    </motion.div>
+  );
+}
+
 // ---------- main page ----------
 export default function PortfolioShrabya() {
   // Replace with your real info
@@ -1416,6 +1446,37 @@ export default function PortfolioShrabya() {
   // preload the ship chunk + model during the gate so it appears instantly
   useEffect(() => {
     if (phase === "gate") import("./WarpShip");
+  }, [phase]);
+
+  // when the intro finishes, the robot greets you (voice + typed bubble)
+  const [greet, setGreet] = useState(false);
+  useEffect(() => {
+    if (phase !== "done") return;
+    const startAt = setTimeout(() => {
+      setGreet(true);
+      try {
+        const synth = window.speechSynthesis;
+        if (synth) {
+          const u = new SpeechSynthesisUtterance(
+            "Hi, I'm Shrabya Paudel. Welcome to my world."
+          );
+          u.pitch = 0.7; // low + robotic
+          u.rate = 0.95;
+          const voices = synth.getVoices();
+          const v =
+            voices.find((x) => /david|male|google uk english male/i.test(x.name)) ||
+            voices[0];
+          if (v) u.voice = v;
+          synth.cancel();
+          synth.speak(u);
+        }
+      } catch {}
+    }, 400);
+    const hide = setTimeout(() => setGreet(false), 6500);
+    return () => {
+      clearTimeout(startAt);
+      clearTimeout(hide);
+    };
   }, [phase]);
   const [active, setActive] = useState("about");
   const [menuOpen, setMenuOpen] = useState(false);
@@ -1851,6 +1912,7 @@ export default function PortfolioShrabya() {
               >
                 <FaceBackground />
               </Suspense>
+              <AnimatePresence>{greet && <RobotSpeech />}</AnimatePresence>
             </div>
           </div>
         </section>
