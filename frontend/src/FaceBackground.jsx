@@ -111,13 +111,13 @@ export default function FaceBackground() {
       dpr={[1, 1.5]}
       gl={{ antialias: true, alpha: true }}
     >
-      <ambientLight intensity={1.1} />
-      <directionalLight position={[4, 5, 5]} intensity={2.6} />
-      <directionalLight position={[-5, -1, -3]} intensity={1.2} color="#818cf8" />
-      <pointLight position={[0, 2, 5]} intensity={16} color="#a5b4fc" />
+      <ambientLight intensity={0.35} />
+      <directionalLight position={[4, 5, 5]} intensity={1.1} />
+      <directionalLight position={[-5, -1, -3]} intensity={0.5} color="#818cf8" />
+      <pointLight position={[0, 2, 5]} intensity={4} color="#a5b4fc" />
       <Suspense fallback={null}>
         <Face />
-        <Environment preset="city" />
+        <Environment preset="city" environmentIntensity={0.35} />
       </Suspense>
     </Canvas>
   );
