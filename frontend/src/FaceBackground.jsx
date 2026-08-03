@@ -10,7 +10,7 @@ function Face() {
   const { scene } = useGLTF(MODEL_URL);
   const morph = useRef(null); // the mesh that has the blend shapes
   const mouse = useRef({ x: 0, y: 0 });
-  const talk = useRef({ on: false, pulse: 0 });
+  const talk = useRef({ until: 0, pulse: 0 });
   const jaw = useRef(0);
   const blink = useRef({ next: 2, active: false, p: 0 });
 
@@ -33,9 +33,14 @@ function Face() {
       mouse.current.x = (e.clientX / window.innerWidth) * 2 - 1;
       mouse.current.y = (e.clientY / window.innerHeight) * 2 - 1;
     };
-    const start = () => (talk.current.on = true);
-    const end = () => (talk.current.on = false);
-    const bound = () => (talk.current.pulse = 1);
+    // keep the mouth "talking" only briefly after each word boundary, so it
+    // stops right after the last spoken word (independent of onend firing)
+    const start = () => (talk.current.until = performance.now() + 1600);
+    const end = () => (talk.current.until = 0);
+    const bound = () => {
+      talk.current.until = performance.now() + 360;
+      talk.current.pulse = 1;
+    };
     window.addEventListener("mousemove", onMove);
     window.addEventListener("robot-talk-start", start);
     window.addEventListener("robot-talk-end", end);
@@ -64,17 +69,18 @@ function Face() {
     if (!morph.current) return;
     const t = talk.current;
     t.pulse *= 0.8;
+    const talking = performance.now() < t.until;
 
     // ---- lip-sync: drive jawOpen (+ funnel) while speaking ----
     let jawTarget = 0;
-    if (t.on) {
+    if (talking) {
       const flap = Math.abs(Math.sin(state.clock.elapsedTime * 9.5)); // slower
       jawTarget = 0.1 + flap * 0.36 + t.pulse * 0.25;
     }
     // when not talking, close fast so the mouth actually stops
-    const ease = t.on ? 0.3 : 0.6;
+    const ease = talking ? 0.3 : 0.6;
     jaw.current += (jawTarget - jaw.current) * ease;
-    if (!t.on && jaw.current < 0.01) jaw.current = 0;
+    if (!talking && jaw.current < 0.01) jaw.current = 0;
     const j = Math.min(0.8, jaw.current);
     set("jawOpen", j);
     set("mouthFunnel", j * 0.25);
