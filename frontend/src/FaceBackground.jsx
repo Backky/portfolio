@@ -12,7 +12,7 @@ function Face() {
   const mouse = useRef({ x: 0, y: 0 });
   const talk = useRef({ on: false, pulse: 0 });
   const jaw = useRef(0);
-  const blink = useRef({ t: 2, v: 0 });
+  const blink = useRef({ next: 2, active: false, p: 0 });
 
   // find the blend-shape mesh
   useEffect(() => {
@@ -67,26 +67,38 @@ function Face() {
 
     // ---- lip-sync: drive jawOpen (+ funnel) while speaking ----
     let jawTarget = 0;
-    if (t.on || t.pulse > 0.02) {
-      const flap = Math.abs(Math.sin(state.clock.elapsedTime * 17));
-      jawTarget = (t.on ? 0.12 + flap * 0.42 : 0) + t.pulse * 0.32;
+    if (t.on) {
+      const flap = Math.abs(Math.sin(state.clock.elapsedTime * 9.5)); // slower
+      jawTarget = 0.1 + flap * 0.36 + t.pulse * 0.25;
     }
-    jaw.current += (jawTarget - jaw.current) * 0.35;
-    const j = Math.min(0.85, jaw.current);
+    // when not talking, close fast so the mouth actually stops
+    const ease = t.on ? 0.3 : 0.6;
+    jaw.current += (jawTarget - jaw.current) * ease;
+    if (!t.on && jaw.current < 0.01) jaw.current = 0;
+    const j = Math.min(0.8, jaw.current);
     set("jawOpen", j);
     set("mouthFunnel", j * 0.25);
     set("mouthClose", (1 - Math.min(1, j * 2)) * 0.15);
 
-    // ---- idle life: soft smile + periodic blink ----
+    // ---- idle life: soft smile + soft, occasional blink ----
     set("mouthSmile_L", 0.1);
     set("mouthSmile_R", 0.1);
-    blink.current.t -= delta;
-    if (blink.current.t <= 0) {
-      blink.current.v = 1;
-      blink.current.t = 2.5 + Math.random() * 3.5;
+    const bk = blink.current;
+    if (!bk.active) {
+      bk.next -= delta;
+      if (bk.next <= 0) {
+        bk.active = true;
+        bk.p = 0;
+      }
+    } else {
+      bk.p += delta / 0.34; // ~0.34s soft close+open
+      if (bk.p >= 1) {
+        bk.active = false;
+        bk.p = 1;
+        bk.next = 4.5 + Math.random() * 3; // every ~4.5-7.5s
+      }
     }
-    blink.current.v *= 0.55; // quick open
-    const b = Math.min(1, blink.current.v);
+    const b = bk.active ? Math.sin(Math.min(bk.p, 1) * Math.PI) : 0;
     set("eyeBlink_L", b);
     set("eyeBlink_R", b);
   });

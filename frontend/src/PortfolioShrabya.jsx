@@ -1578,6 +1578,8 @@ export default function PortfolioShrabya() {
           u.onboundary = () => window.dispatchEvent(new Event("robot-talk-boundary"));
           synth.cancel();
           synth.speak(u);
+          // fallback: guarantee the mouth stops even if onend never fires
+          setTimeout(() => window.dispatchEvent(new Event("robot-talk-end")), 4000);
         }
       } catch {}
     }, 400);
