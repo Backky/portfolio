@@ -77,14 +77,14 @@ export default function TechKeyboard() {
   return (
     <div>
       {/* quiet detail line above the keyboard */}
-      <div className="mb-4 flex min-h-[1.75rem] items-center justify-center text-center">
+      <div className="mb-4 flex min-h-[2.25rem] items-center justify-center text-center">
         {active ? (
-          <p className="text-sm">
-            <span className="font-semibold text-white">{active.title}</span>
-            <span className="text-white/45"> — {active.def}</span>
+          <p className="text-base sm:text-lg">
+            <span className="font-bold text-white">{active.title}</span>
+            <span className="font-medium text-white/60"> — {active.def}</span>
           </p>
         ) : (
-          <p className="label-mono text-[10px] text-white/30">Hover a key</p>
+          <p className="label-mono text-[11px] text-white/35">Hover a key</p>
         )}
       </div>
 
@@ -102,7 +102,7 @@ export default function TechKeyboard() {
               "0 26px 0 -2px #0a0b0e, 0 34px 0 -2px #070709, 0 60px 70px rgba(0,0,0,0.7)",
           }}
         >
-          <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
+          <div className="grid grid-cols-6 gap-3 sm:gap-4">
             {KEYS.map(([icon, def]) => (
               <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
             ))}

@@ -178,19 +178,23 @@ body {
   .welcome-svg-glow { animation: none; }
 }
 
-/* 3D keycap that presses down smoothly on hover */
+/* chunky 3D keycap that presses down smoothly on hover */
 .keycap {
-  background: linear-gradient(180deg, var(--light), var(--cap));
-  box-shadow: 0 7px 0 var(--dark), 0 12px 16px rgba(0, 0, 0, 0.55),
-    inset 0 1px 1px rgba(255, 255, 255, 0.35);
-  transition: transform 0.14s cubic-bezier(0.3, 0.7, 0.4, 1),
-    box-shadow 0.14s cubic-bezier(0.3, 0.7, 0.4, 1);
+  border-radius: 14px;
+  background: linear-gradient(158deg, var(--light), var(--cap) 52%, var(--dark));
+  box-shadow: 0 15px 0 var(--dark), /* thick side wall */
+    0 18px 22px rgba(0, 0, 0, 0.6), /* ground shadow */
+    inset 0 2px 2px rgba(255, 255, 255, 0.45), /* top bevel highlight */
+    inset 0 -5px 8px rgba(0, 0, 0, 0.35); /* bottom inner shade */
+  transition: transform 0.17s cubic-bezier(0.34, 1.35, 0.64, 1),
+    box-shadow 0.17s cubic-bezier(0.34, 1.35, 0.64, 1);
 }
 .keycap:hover,
 .keycap:focus-visible {
-  transform: translateY(6px);
-  box-shadow: 0 1px 0 var(--dark), 0 3px 6px rgba(0, 0, 0, 0.5),
-    inset 0 1px 1px rgba(255, 255, 255, 0.35);
+  transform: translateY(12px);
+  box-shadow: 0 3px 0 var(--dark), 0 6px 9px rgba(0, 0, 0, 0.5),
+    inset 0 2px 2px rgba(255, 255, 255, 0.45),
+    inset 0 -5px 8px rgba(0, 0, 0, 0.35);
   outline: none;
 }
 
