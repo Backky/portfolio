@@ -190,9 +190,12 @@ body {
   transition: transform 0.16s ease-out;
   will-change: transform;
 }
-.keycap:hover,
-.keycap:focus-visible {
+/* hover the STATIC wrapper, move only the inner cap -> no flicker, no occlusion */
+.key-hit:hover .keycap,
+.key-hit:focus-within .keycap {
   transform: translateY(9px);
+}
+.key-hit:focus-visible {
   outline: none;
 }
 

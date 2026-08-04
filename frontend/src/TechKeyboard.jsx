@@ -51,6 +51,7 @@ function Key({ icon, def, onHover }) {
   if (parseInt(hex, 16) < 0x151515) hex = "2b2b31";
   const ic = iconColor(hex);
   return (
+    // static hit-area receives hover; only the inner cap moves -> no flicker
     <button
       type="button"
       aria-label={icon.title}
@@ -58,16 +59,20 @@ function Key({ icon, def, onHover }) {
       onMouseLeave={() => onHover(null)}
       onFocus={() => onHover({ title: icon.title, def })}
       onBlur={() => onHover(null)}
-      className="keycap flex aspect-square w-full items-center justify-center rounded-lg"
-      style={{
-        "--cap": `#${hex}`,
-        "--light": shade(hex, 1.22),
-        "--dark": shade(hex, 0.55),
-      }}
+      className="key-hit block w-full pb-[14px]"
     >
-      <svg viewBox="0 0 24 24" className="h-[52%] w-[52%]" style={{ fill: ic }}>
-        <path d={icon.path} />
-      </svg>
+      <div
+        className="keycap flex aspect-square w-full items-center justify-center rounded-xl"
+        style={{
+          "--cap": `#${hex}`,
+          "--light": shade(hex, 1.22),
+          "--dark": shade(hex, 0.55),
+        }}
+      >
+        <svg viewBox="0 0 24 24" className="h-[52%] w-[52%]" style={{ fill: ic }}>
+          <path d={icon.path} />
+        </svg>
+      </div>
     </button>
   );
 }
@@ -88,25 +93,12 @@ export default function TechKeyboard() {
         )}
       </div>
 
-      {/* isometric 3D keyboard */}
-      <div
-        className="mx-auto flex max-w-3xl justify-center py-10 sm:py-16"
-        style={{ perspective: "1500px", perspectiveOrigin: "50% 42%" }}
-      >
-        <div
-          className="rounded-[22px] border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0b0c10] p-3.5 sm:p-4"
-          style={{
-            transform: "rotateX(53deg) rotateZ(-38deg)",
-            transformStyle: "preserve-3d",
-            boxShadow:
-              "0 26px 0 -2px #0a0b0e, 0 34px 0 -2px #070709, 0 60px 70px rgba(0,0,0,0.7)",
-          }}
-        >
-          <div className="grid grid-cols-6 gap-3 sm:gap-4">
-            {KEYS.map(([icon, def]) => (
-              <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
-            ))}
-          </div>
+      {/* keyboard tray */}
+      <div className="mx-auto max-w-xl rounded-[22px] border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0b0c10] p-4 shadow-[0_40px_120px_-50px_rgba(0,0,0,0.9)] sm:p-5">
+        <div className="grid grid-cols-5 gap-3 sm:grid-cols-6 sm:gap-4">
+          {KEYS.map(([icon, def]) => (
+            <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
+          ))}
         </div>
       </div>
     </div>
