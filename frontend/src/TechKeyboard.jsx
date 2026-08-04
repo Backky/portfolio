@@ -5,37 +5,39 @@ import {
   siVercel, siNginx, siDocker, siDigitalocean, siGooglegemini, siVite, siNpm,
 } from "simple-icons";
 
-// each: [icon, 6-word definition]
+// icon keys: { icon, def }  |  text keys: { label, title, hex, def }
 const KEYS = [
-  [siJavascript, "Core language of the web"],
-  [siTypescript, "Typed JavaScript for safer code"],
-  [siReact, "Library for building user interfaces"],
-  [siNodedotjs, "JavaScript runtime for the server"],
-  [siExpress, "Minimal, fast Node.js web framework"],
-  [siMongodb, "Flexible NoSQL document database"],
-  [siHtml5, "Structure and markup of webpages"],
-  [siCss, "Styling and layout of webpages"],
-  [siTailwindcss, "Utility-first CSS styling framework"],
-  [siFramer, "Smooth animations for React apps"],
-  [siGit, "Version control for tracking code"],
-  [siGithub, "Hosting and collaboration for repos"],
-  [siPython, "Language for data and AI"],
-  [siVite, "Fast modern frontend build tool"],
-  [siNpm, "Package manager for JavaScript projects"],
-  [siGooglegemini, "Google's large language model API"],
-  [siDocker, "Containerize and run apps anywhere"],
-  [siNginx, "High-performance web server and proxy"],
-  [siDigitalocean, "Cloud servers for deploying apps"],
-  [siVercel, "Frontend deployment and hosting platform"],
+  { icon: siJavascript, def: "Core language of the web" },
+  { icon: siTypescript, def: "Typed JavaScript for safer code" },
+  { icon: siReact, def: "Library for building user interfaces" },
+  { icon: siNodedotjs, def: "JavaScript runtime for the server" },
+  { icon: siExpress, def: "Minimal, fast Node.js web framework" },
+  { icon: siMongodb, def: "Flexible NoSQL document database" },
+  { icon: siHtml5, def: "Structure and markup of webpages" },
+  { icon: siCss, def: "Styling and layout of webpages" },
+  { icon: siTailwindcss, def: "Utility-first CSS styling framework" },
+  { icon: siFramer, def: "Smooth animations for React apps" },
+  { icon: siGit, def: "Version control for tracking code" },
+  { icon: siGithub, def: "Hosting and collaboration for repos" },
+  { icon: siPython, def: "Language for data and AI" },
+  { icon: siVite, def: "Fast modern frontend build tool" },
+  { icon: siNpm, def: "Package manager for JavaScript projects" },
+  { icon: siGooglegemini, def: "Google's large language model API" },
+  { icon: siDocker, def: "Containerize and run apps anywhere" },
+  { icon: siNginx, def: "High-performance web server and proxy" },
+  { icon: siDigitalocean, def: "Cloud servers for deploying apps" },
+  { icon: siVercel, def: "Frontend deployment and hosting platform" },
+  { label: "AI", title: "AI", hex: "8b5cf6", def: "Building AI-powered web apps" },
+  { label: "ML", title: "Machine Learning", hex: "f97316", def: "Machine learning fundamentals" },
+  { label: "API", title: "REST APIs", hex: "10b981", def: "Designing and consuming APIs" },
+  { label: "JWT", title: "JWT Auth", hex: "3b82f6", def: "Secure token-based authentication" },
 ];
 
-// luminance -> pick a readable icon colour
 function iconColor(hex) {
   const r = parseInt(hex.slice(0, 2), 16);
   const g = parseInt(hex.slice(2, 4), 16);
   const b = parseInt(hex.slice(4, 6), 16);
-  const lum = 0.299 * r + 0.587 * g + 0.114 * b;
-  return lum > 175 ? "#0b0b0f" : "#ffffff";
+  return 0.299 * r + 0.587 * g + 0.114 * b > 175 ? "#0b0b0f" : "#ffffff";
 }
 function shade(hex, f) {
   const r = Math.round(parseInt(hex.slice(0, 2), 16) * f);
@@ -45,21 +47,21 @@ function shade(hex, f) {
   return `#${c(r)}${c(g)}${c(b)}`;
 }
 
-function Key({ icon, def, onHover }) {
-  let hex = icon.hex;
-  // near-black brands -> dark keycap instead of pure black
+function Key({ item, onHover }) {
+  const icon = item.icon;
+  const title = icon ? icon.title : item.title;
+  let hex = icon ? icon.hex : item.hex;
   if (parseInt(hex, 16) < 0x151515) hex = "2b2b31";
   const ic = iconColor(hex);
   return (
-    // static hit-area receives hover; only the inner cap moves -> no flicker
     <button
       type="button"
-      aria-label={icon.title}
-      onMouseEnter={() => onHover({ title: icon.title, def })}
+      aria-label={title}
+      onMouseEnter={() => onHover({ title, def: item.def })}
       onMouseLeave={() => onHover(null)}
-      onFocus={() => onHover({ title: icon.title, def })}
+      onFocus={() => onHover({ title, def: item.def })}
       onBlur={() => onHover(null)}
-      className="key-hit block w-full pb-[14px]"
+      className="key-hit block w-full pb-[13px]"
     >
       <div
         className="keycap flex aspect-square w-full items-center justify-center rounded-xl"
@@ -69,9 +71,15 @@ function Key({ icon, def, onHover }) {
           "--dark": shade(hex, 0.55),
         }}
       >
-        <svg viewBox="0 0 24 24" className="h-[52%] w-[52%]" style={{ fill: ic }}>
-          <path d={icon.path} />
-        </svg>
+        {icon ? (
+          <svg viewBox="0 0 24 24" className="h-[52%] w-[52%]" style={{ fill: ic }}>
+            <path d={icon.path} />
+          </svg>
+        ) : (
+          <span className="text-lg font-extrabold sm:text-xl" style={{ color: ic }}>
+            {item.label}
+          </span>
+        )}
       </div>
     </button>
   );
@@ -93,12 +101,25 @@ export default function TechKeyboard() {
         )}
       </div>
 
-      {/* keyboard tray */}
-      <div className="mx-auto max-w-xl rounded-[22px] border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0b0c10] p-4 shadow-[0_40px_120px_-50px_rgba(0,0,0,0.9)] sm:p-5">
-        <div className="grid grid-cols-5 gap-3 sm:grid-cols-6 sm:gap-4">
-          {KEYS.map(([icon, def]) => (
-            <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
-          ))}
+      {/* tilted keyboard tray (rotateX gives the 3D angle; small rotateZ only,
+          so columns don't occlude each other and every key stays hoverable) */}
+      <div
+        className="mx-auto flex max-w-2xl justify-center py-6 sm:py-10"
+        style={{ perspective: "1600px", perspectiveOrigin: "50% 38%" }}
+      >
+        <div
+          className="rounded-[22px] border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0b0c10] p-4 sm:p-5"
+          style={{
+            transform: "rotateX(34deg) rotateZ(-7deg)",
+            boxShadow:
+              "0 24px 0 -2px #0a0b0e, 0 30px 0 -2px #060608, 0 55px 70px rgba(0,0,0,0.7)",
+          }}
+        >
+          <div className="grid grid-cols-6 gap-3 sm:gap-4">
+            {KEYS.map((item) => (
+              <Key key={item.title || (item.icon && item.icon.title)} item={item} onHover={setActive} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
