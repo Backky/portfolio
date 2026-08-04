@@ -15,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import { warpShipPath } from "./warpPath";
+import TechKeyboard from "./TechKeyboard";
 
 // "WELCOME" as a bold outline path (Poppins ExtraBold), for the snake glow
 const WELCOME_PATH =
@@ -2130,7 +2131,7 @@ export default function PortfolioShrabya() {
             desc="I focus on building reliable features with a clean architecture—and then add polished UI motion that makes everything feel premium."
           />
 
-          <CodeSkills skills={skills} />
+          <TechKeyboard />
 
           <div className="mt-6 rounded-[28px] border border-white/10 bg-white/5 p-5 backdrop-blur">
             <div className="flex flex-wrap items-center justify-between gap-4">
