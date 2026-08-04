@@ -88,12 +88,25 @@ export default function TechKeyboard() {
         )}
       </div>
 
-      {/* compact keyboard */}
-      <div className="mx-auto max-w-lg rounded-2xl border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0c0d11] p-3.5 shadow-[0_40px_120px_-50px_rgba(0,0,0,0.9)] sm:p-4">
-        <div className="grid grid-cols-5 gap-2 sm:grid-cols-10 sm:gap-2.5">
-          {KEYS.map(([icon, def]) => (
-            <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
-          ))}
+      {/* isometric 3D keyboard */}
+      <div
+        className="mx-auto flex max-w-3xl justify-center py-10 sm:py-16"
+        style={{ perspective: "1500px", perspectiveOrigin: "50% 42%" }}
+      >
+        <div
+          className="rounded-[22px] border border-white/10 bg-gradient-to-b from-[#17181d] to-[#0b0c10] p-3.5 sm:p-4"
+          style={{
+            transform: "rotateX(53deg) rotateZ(-38deg)",
+            transformStyle: "preserve-3d",
+            boxShadow:
+              "0 26px 0 -2px #0a0b0e, 0 34px 0 -2px #070709, 0 60px 70px rgba(0,0,0,0.7)",
+          }}
+        >
+          <div className="grid grid-cols-6 gap-2 sm:gap-2.5">
+            {KEYS.map(([icon, def]) => (
+              <Key key={icon.title} icon={icon} def={def} onHover={setActive} />
+            ))}
+          </div>
         </div>
       </div>
     </div>
