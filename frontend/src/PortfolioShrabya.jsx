@@ -14,14 +14,12 @@ import {
   Star,
   Trophy,
 } from "lucide-react";
-import { warpShipPath } from "./warpPath";
 import TechKeyboard from "./TechKeyboard";
 
 // "WELCOME" as a bold outline path (Poppins ExtraBold), for the snake glow
 const WELCOME_PATH =
   "M125.5 44.3L157.3 44.3L131.4 150.0L95.3 150.0L80.7 85.2L65.8 150.0L29.7 150.0L4.0 44.3L35.9 44.3L48.1 116.6L64.8 44.3L97.0 44.3L113.3 116.0L125.5 44.3M237.4 67.8L199.2 67.8L199.2 85.0L232.9 85.0L232.9 107.4L199.2 107.4L199.2 126.5L237.4 126.5L237.4 150.0L169.8 150.0L169.8 44.3L237.4 44.3L237.4 67.8M281.4 44.3L281.4 127.5L314.3 127.5L314.3 150.0L252.0 150.0L252.0 44.3L281.4 44.3M322.1 96.9Q322.1 81.3 328.6 69.1Q335.1 56.9 347.1 50.0Q359.1 43.2 374.7 43.2L374.7 43.2Q394.5 43.2 408.0 53.8Q421.5 64.4 425.4 82.5L425.4 82.5L393.8 82.5Q390.9 76.5 385.9 73.4Q380.9 70.2 374.3 70.2L374.3 70.2Q364.1 70.2 358.0 77.5Q351.9 84.8 351.9 96.9L351.9 96.9Q351.9 109.2 358.0 116.5Q364.1 123.8 374.3 123.8L374.3 123.8Q380.9 123.8 385.9 120.6Q390.9 117.5 393.8 111.5L393.8 111.5L425.4 111.5Q421.5 129.6 408.0 140.2Q394.5 150.8 374.7 150.8L374.7 150.8Q359.1 150.8 347.1 143.9Q335.1 137.1 328.6 124.9Q322.1 112.7 322.1 96.9L322.1 96.9M490.0 151.1Q475.2 151.1 462.8 144.1Q450.3 137.1 443.0 124.7Q435.8 112.3 435.8 96.8L435.8 96.8Q435.8 81.2 443.0 68.8Q450.3 56.4 462.8 49.5Q475.2 42.6 490.0 42.6L490.0 42.6Q505.0 42.6 517.4 49.5Q529.8 56.4 537.0 68.8Q544.2 81.2 544.2 96.8L544.2 96.8Q544.2 112.3 537.0 124.7Q529.8 137.1 517.4 144.1Q504.9 151.1 490.0 151.1L490.0 151.1M490.0 123.8Q501.3 123.8 507.8 116.4Q514.4 109.1 514.4 96.8L514.4 96.8Q514.4 84.2 507.8 76.9Q501.3 69.6 490.0 69.6L490.0 69.6Q478.6 69.6 472.2 76.9Q465.8 84.2 465.8 96.8L465.8 96.8Q465.8 109.2 472.2 116.5Q478.6 123.8 490.0 123.8L490.0 123.8M645.5 44.3L680.9 44.3L680.9 150.0L651.5 150.0L651.5 91.7L631.5 150.0L606.9 150.0L586.8 91.2L586.8 150.0L557.4 150.0L557.4 44.3L593.0 44.3L619.5 113.0L645.5 44.3M765.3 67.8L727.0 67.8L727.0 85.0L760.8 85.0L760.8 107.4L727.0 107.4L727.0 126.5L765.3 126.5L765.3 150.0L697.6 150.0L697.6 44.3L765.3 44.3L765.3 67.8";
 const FaceBackground = lazy(() => import("./FaceBackground"));
-const WarpShip = lazy(() => import("./WarpShip"));
 import { Card, CardContent, CardHeader, CardTitle } from "./components/ui/card";
 import { Button } from "./components/ui/button";
 import { Badge } from "./components/ui/badge";
@@ -1082,60 +1080,6 @@ function WarpTransition({ onDone }) {
 
     const DUR = reduce ? 250 : 3000;
 
-    // ---------- sound (Web Audio, no asset) ----------
-    let cleanupAudio = () => {};
-    let audioGain = null; // updated per-frame by the ship's distance
-    if (!reduce) {
-      try {
-        const AC = window.AudioContext || window.webkitAudioContext;
-        const ac = new AC();
-        ac.resume && ac.resume();
-        const t0 = ac.currentTime;
-        const master = ac.createGain();
-        master.gain.value = 0.0001; // driven manually in the tick loop
-        master.connect(ac.destination);
-        audioGain = master;
-
-        // rising engine (sawtooth sweeping up)
-        const osc = ac.createOscillator();
-        osc.type = "sawtooth";
-        osc.frequency.setValueAtTime(45, t0);
-        osc.frequency.exponentialRampToValueAtTime(340, t0 + 2.3);
-        const oscGain = ac.createGain();
-        oscGain.gain.value = 0.12;
-        osc.connect(oscGain).connect(master);
-
-        // whoosh (band-passed white noise sweeping up)
-        const size = 2 * ac.sampleRate;
-        const buf = ac.createBuffer(1, size, ac.sampleRate);
-        const data = buf.getChannelData(0);
-        for (let i = 0; i < size; i++) data[i] = Math.random() * 2 - 1;
-        const noise = ac.createBufferSource();
-        noise.buffer = buf;
-        noise.loop = true;
-        const bp = ac.createBiquadFilter();
-        bp.type = "bandpass";
-        bp.frequency.setValueAtTime(280, t0);
-        bp.frequency.exponentialRampToValueAtTime(4200, t0 + 2.0);
-        bp.Q.value = 0.7;
-        const noiseGain = ac.createGain();
-        noiseGain.gain.value = 0.2;
-        noise.connect(bp).connect(noiseGain).connect(master);
-
-        osc.start(t0);
-        noise.start(t0);
-        osc.stop(t0 + 3.1);
-        noise.stop(t0 + 3.1);
-        cleanupAudio = () => {
-          try {
-            osc.stop();
-            noise.stop();
-            ac.close();
-          } catch {}
-        };
-      } catch {}
-    }
-
     // ---------- visuals ----------
     const canvas = canvasRef.current;
     const ctx = canvas.getContext("2d");
@@ -1165,16 +1109,9 @@ function WarpTransition({ onDone }) {
       const t = now - start;
       const p = Math.min(t / DUR, 1);
 
-      // follow the ship: the warp centre tracks its screen position, and the
-      // engine sound rises/falls with how near the ship is
-      const path = warpShipPath(p);
-      cx = W / 2 + path.nx * W * 0.32;
-      cy = H / 2 - path.ny * H * 0.32;
-      if (audioGain) {
-        // silent until the ship approaches; rises with proximity, falls as it leaves
-        const fadeOut = Math.min(1, (1 - p) / 0.15);
-        audioGain.gain.value = fadeOut * path.near * path.near * 0.75;
-      }
+      // fixed centre (no ship to follow)
+      cx = W / 2;
+      cy = H / 2;
 
       // accelerate hard, then ease at arrival
       const speed = (2 + p * p * 65) * DPR * 6;
@@ -1196,9 +1133,11 @@ function WarpTransition({ onDone }) {
 
       // perfectly radial hyperspace streaks accelerating outward from centre
       const spd = (0.008 + p * p * 0.05); // fraction of radius per frame
+      const swirl = 0.02 + p * 0.05; // angular rotation -> spiral swirl
       for (const s of stars) {
         const pr = s.r;
         s.r += pr * spd + (1.5 + p * 6) * DPR;
+        s.ang += swirl; // curve the streak into a swirl
         if (s.r > maxR) {
           Object.assign(s, mk(0.06)); // respawn near the centre
           continue;
@@ -1262,7 +1201,6 @@ function WarpTransition({ onDone }) {
     return () => {
       cancelAnimationFrame(raf);
       window.removeEventListener("resize", resize);
-      cleanupAudio();
     };
   }, [onDone]);
 
@@ -1276,15 +1214,6 @@ function WarpTransition({ onDone }) {
       aria-hidden="true"
     >
       <canvas ref={canvasRef} className="h-full w-full" />
-      {/* 3D spaceship flying through the warp, over the star streaks */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{ animation: "warp-ship-out 3000ms linear forwards" }}
-      >
-        <Suspense fallback={null}>
-          <WarpShip />
-        </Suspense>
-      </div>
     </motion.div>
   );
 }
@@ -1551,11 +1480,6 @@ export default function PortfolioShrabya() {
     return () => {
       document.body.style.overflow = "";
     };
-  }, [phase]);
-
-  // preload the ship chunk + model during the gate so it appears instantly
-  useEffect(() => {
-    if (phase === "gate") import("./WarpShip");
   }, [phase]);
 
   // when the intro finishes, the robot greets you out loud (no subtitles)
