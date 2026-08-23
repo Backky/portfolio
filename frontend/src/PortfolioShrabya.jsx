@@ -1160,6 +1160,35 @@ function WarpTransition({ onDone }) {
         ctx.stroke();
       }
 
+      // black-hole core + glowing white event-horizon ring at the centre,
+      // growing as you fall in
+      const coreR = Math.min(W, H) * (0.015 + p * 0.13);
+      // dark void
+      const cg = ctx.createRadialGradient(cx, cy, coreR * 0.4, cx, cy, coreR * 1.25);
+      cg.addColorStop(0, "rgba(0,0,0,1)");
+      cg.addColorStop(0.8, "rgba(0,0,0,0.95)");
+      cg.addColorStop(1, "rgba(0,0,0,0)");
+      ctx.fillStyle = cg;
+      ctx.beginPath();
+      ctx.arc(cx, cy, coreR * 1.25, 0, Math.PI * 2);
+      ctx.fill();
+      // bright white ring (photon ring) with glow
+      ctx.save();
+      ctx.shadowColor = "rgba(255,255,255,0.95)";
+      ctx.shadowBlur = (8 + p * 34) * DPR;
+      ctx.lineWidth = (1.4 + p * 3.2) * DPR;
+      ctx.strokeStyle = `rgba(255,255,255,${0.55 + p * 0.45})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, coreR, 0, Math.PI * 2);
+      ctx.stroke();
+      // faint outer halo ring
+      ctx.lineWidth = 1 * DPR;
+      ctx.strokeStyle = `rgba(210,225,255,${0.15 + p * 0.25})`;
+      ctx.beginPath();
+      ctx.arc(cx, cy, coreR * 1.5, 0, Math.PI * 2);
+      ctx.stroke();
+      ctx.restore();
+
       // calm dark vignette in the centre so the ship reads cleanly
       const vig = ctx.createRadialGradient(cx, cy, 0, cx, cy, Math.min(W, H) * 0.55);
       vig.addColorStop(0, "rgba(3,4,14,0.5)");
