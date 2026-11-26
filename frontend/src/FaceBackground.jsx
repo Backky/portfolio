@@ -1,20 +1,32 @@
 import { Suspense, useEffect, useRef } from "react";
-import { Canvas, useFrame } from "@react-three/fiber";
+import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useGLTF, Environment, Center, Resize } from "@react-three/drei";
+import { KTX2Loader } from "three/examples/jsm/loaders/KTX2Loader.js";
 
-// facecap face scan (three.js examples) — has 52 ARKit blend shapes for lip-sync
+// facecap face scan (three.js examples) — 52 ARKit blend shapes for lip-sync.
+// Its skin texture is KTX2/Basis-compressed and its mesh is meshopt-compressed,
+// so both decoders are needed (the Basis transcoder is self-hosted).
 const MODEL_URL = `${import.meta.env.BASE_URL}models/face.glb`;
+let ktx2 = null;
 
 function Face() {
   const ref = useRef();
-  const { scene } = useGLTF(MODEL_URL);
+  const gl = useThree((s) => s.gl);
+  const { scene } = useGLTF(MODEL_URL, false, true, (loader) => {
+    if (!ktx2) {
+      ktx2 = new KTX2Loader()
+        .setTranscoderPath(`${import.meta.env.BASE_URL}basis/`)
+        .detectSupport(gl);
+    }
+    loader.setKTX2Loader(ktx2);
+  });
   const morph = useRef(null); // the mesh that has the blend shapes
   const mouse = useRef({ x: 0, y: 0 });
   const talk = useRef({ until: 0, pulse: 0 });
   const jaw = useRef(0);
   const blink = useRef({ next: 2, active: false, p: 0 });
 
-  // find the blend-shape mesh
+  // find the blend-shape mesh + give the pale scan a cooler, premium skin tone
   useEffect(() => {
     scene.traverse((o) => {
       if (
@@ -23,6 +35,12 @@ function Face() {
         o.morphTargetDictionary.jawOpen !== undefined
       ) {
         morph.current = o;
+      }
+      if (o.isMesh && o.material && o.material.map) {
+        o.material.color.set("#a9a1c4"); // lavender-grey multiplier on the skin
+        if ("roughness" in o.material) o.material.roughness = 0.55;
+        if ("envMapIntensity" in o.material) o.material.envMapIntensity = 0.8;
+        o.material.needsUpdate = true;
       }
     });
   }, [scene]);
@@ -143,4 +161,4 @@ export default function FaceBackground() {
   );
 }
 
-useGLTF.preload(MODEL_URL);
+// (no preload: the KTX2 loader needs the renderer, set up inside Face)

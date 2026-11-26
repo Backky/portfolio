@@ -15,6 +15,7 @@ import {
   Trophy,
 } from "lucide-react";
 import TechKeyboard from "./TechKeyboard";
+import BlackHoleWarp from "./BlackHoleWarp";
 
 // "WELCOME" as a bold outline path (Poppins ExtraBold), for the snake glow
 const WELCOME_PATH =
@@ -1584,7 +1585,7 @@ export default function PortfolioShrabya() {
     <div className="min-h-screen overflow-x-clip bg-black text-white">
       <AnimatePresence>
         {phase === "gate" && <IntroGate onEnter={() => setPhase("warp")} />}
-        {phase === "warp" && <WarpTransition onDone={() => setPhase("done")} />}
+        {phase === "warp" && <BlackHoleWarp onDone={() => setPhase("done")} />}
       </AnimatePresence>
       <ScrollProgress />
       <RippleLayer />
