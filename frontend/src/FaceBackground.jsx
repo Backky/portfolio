@@ -125,17 +125,19 @@ function Face() {
 export default function FaceBackground() {
   return (
     <Canvas
-      camera={{ position: [0, 0, 6], fov: 40 }}
-      dpr={[1, 1.5]}
-      gl={{ antialias: true, alpha: true }}
+      camera={{ position: [0, 0, 6], fov: 38 }}
+      dpr={[1, 2]}
+      gl={{ antialias: true, alpha: true, toneMappingExposure: 1.05 }}
     >
-      <ambientLight intensity={0.35} />
-      <directionalLight position={[4, 5, 5]} intensity={1.1} />
-      <directionalLight position={[-5, -1, -3]} intensity={0.5} color="#818cf8" />
-      <pointLight position={[0, 2, 5]} intensity={4} color="#a5b4fc" />
+      {/* studio 3-point lighting: soft key, cool violet rim, warm low fill */}
+      <ambientLight intensity={0.22} />
+      <directionalLight position={[3.5, 4, 5]} intensity={1.25} color="#fff6ee" />
+      <directionalLight position={[-4.5, 2, -4]} intensity={2.2} color="#8b7bff" />
+      <directionalLight position={[4, -1, -4]} intensity={1.2} color="#d946ef" />
+      <pointLight position={[-3, -2, 3]} intensity={2.5} color="#ffd9b8" />
       <Suspense fallback={null}>
         <Face />
-        <Environment preset="city" environmentIntensity={0.35} />
+        <Environment preset="studio" environmentIntensity={0.3} />
       </Suspense>
     </Canvas>
   );

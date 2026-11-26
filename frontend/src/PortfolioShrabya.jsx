@@ -1964,6 +1964,7 @@ export default function PortfolioShrabya() {
 
             {/* 3D robot face with a neural constellation behind the head */}
             <div className="relative h-[360px] sm:h-[460px]">
+              <div className="hero-aura pointer-events-none absolute inset-[12%]" aria-hidden="true" />
               <NeuralPanel />
               <div className="relative z-10 h-full">
                 <Suspense
