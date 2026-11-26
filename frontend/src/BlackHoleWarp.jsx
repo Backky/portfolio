@@ -108,11 +108,12 @@ void main(){
   float rays = pow(fbm(vec2(ta*9.0, t*1.5)), 2.2) * 1.6;
   float core = 1.0 - smoothstep(0.0, pRad*0.45 + 1e-3, tr);
   float glow = 1.0 - smoothstep(pRad*0.2, pRad + 1e-3, tr);
-  vec3 light = vec3(0.32,0.22,0.85) * glow * (0.6 + rays)
-             + vec3(0.95,0.9,1.0) * core * (0.8 + 0.4*rays);
-  col = mix(col, light, portal * glow);
-  // settle into darkness so the page fades up cleanly
-  col *= 1.0 - smoothstep(0.95, 1.0, p) * 0.85;
+  vec3 light = vec3(0.22,0.15,0.6) * glow * (0.45 + 0.7*rays)
+             + vec3(0.55,0.45,0.85) * core * (0.35 + 0.25*rays);
+  col = mix(col, light, portal * glow * 0.8);
+  // ease smoothly down to the site's black background
+  float settle = smoothstep(0.86, 1.0, p);
+  col *= 1.0 - settle*settle*(3.0 - 2.0*settle);
 
   // fade in, vignette, filmic tonemap
   col *= smoothstep(0.0, 0.12, p);
@@ -207,7 +208,7 @@ export default function BlackHoleWarp({ onDone }) {
       key="blackhole"
       initial={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      transition={{ duration: 0.9, ease: "easeOut" }}
+      transition={{ duration: 1.4, ease: [0.4, 0, 0.2, 1] }}
       className="fixed inset-0 z-[9998] bg-black"
       aria-hidden="true"
     >
